@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Punkt Zerowy — Metryka SERC</title>
+  <meta name="description" content="Punkt Zerowy w metryce SERC: Ścieżka, Energia, Rezonans, Całość. Nowy paradygmat opisu rzeczywistości." />
+  <meta name="keywords" content="SERC, Punkt Zerowy, rezonans, całość, geometria 4-ech, 4EVH" />
+  <style>
+    :root {
+      --bg: #0e0f13;
+      --fg: #eaeaf0;
+      --muted: #a0a3b1;
+      --accent: #7dd3fc;
+      --accent-2: #c084fc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 50% -10%, #1a1b24, var(--bg));
+      color: var(--fg);
+      line-height: 1.6;
+    }
+    header {
+      padding: 6rem 1.5rem 4rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      margin: 0 0 1rem;
+      letter-spacing: 0.04em;
+    }
+    header p {
+      max-width: 720px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(8px);
+      background: rgba(14,15,19,0.7);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      z-index: 10;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.2rem;
+      margin: 0;
+      padding: 0.8rem 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    nav a {
+      color: var(--fg);
+      text-decoration: none;
+      font-size: 0.95rem;
+      opacity: 0.85;
+      transition: all 0.2s;
+    }
+    nav a:hover { opacity: 1; color: var(--accent); }
+    section {
+      padding: 4rem 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    section h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 1.4rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      transition: all 0.3s;
+    }
+    .card:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(125,211,252,0.3);
+      transform: translateY(-2px);
+    }
+    .card h3 { margin-top: 0; }
+    .quote {
+      font-style: italic;
+      color: var(--muted);
+      border-left: 3px solid var(--accent-2);
+      padding-left: 1rem;
+      margin: 2rem 0;
+    }
+
+    /* Works section */
+    .works {
+      padding: 5rem 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .works h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 3rem;
+    }
+    .works-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    .work-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      transition: all 0.3s;
+      text-decoration: none;
+      color: var(--fg);
+      display: block;
+    }
+    .work-card:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 15px 40px rgba(125,211,252,0.15);
+    }
+    .work-card h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.4rem;
+      color: var(--accent);
+    }
+    .work-card .work-type {
+      font-size: 0.85rem;
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .work-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    footer {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .works-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Punkt Zerowy</h1>
+    <p>
+      Metryka SERC — cztery współzależne osie rzeczywistości wyłaniające się z jednego
+      punktu czystej potencjalności.
+    </p>
+  </header>
+
+  <nav>
+    <ul>
+      <li><a href="#p0">Punkt 0</a></li>
+      <li><a href="#serc">S · E · R · C</a></li>
+      <li><a href="#zasady">Zasady</a></li>
+      <li><a href="#zastosowania">Zastosowania</a></li>
+      <li><a href="#manifest">Manifest</a></li>
+      <li><a href="#prace">Prace</a></li>
+    </ul>
+  </nav>
+
+  <section id="p0">
+    <h2>Punkt Zerowy</h2>
+    <p>
+      Punkt Zerowy (0) nie jest miejscem w przestrzeni, lecz stanem granicznym —
+      równowagą, w której <strong>S = 0, E = 0, R = 0, C = 0</strong>.
+      To brama potencjalności, z której wyłaniają się wszystkie konfiguracje.
+    </p>
+    <div class="quote">
+      „W Punkcie Zerowym nic nie jest wymuszone — wszystko jest możliwe."
+    </div>
+  </section>
+
+  <section id="serc">
+    <h2>Cztery Osie SERC</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>S — Ścieżka</h3>
+        <p>Forma, struktura i manifestacja. To <em>gdzie</em> i <em>jak</em> coś się wydarza.</p>
+      </div>
+      <div class="card">
+        <h3>E — Energia</h3>
+        <p>Potencjał zmiany, intensywność i zdolność do działania.</p>
+      </div>
+      <div class="card">
+        <h3>R — Rezonans</h3>
+        <p>Relacja, synchronizacja i informacja. Aspekt pierwotny.</p>
+      </div>
+      <div class="card">
+        <h3>C — Całość</h3>
+        <p>Emergentny sens i spójność wyłaniająca się z harmonii S, E i R.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="zasady">
+    <h2>Podstawowe Zasady</h2>
+    <ul>
+      <li>Zmiana na jednej osi wpływa na wszystkie pozostałe.</li>
+      <li>Rezonans (R) poprzedza formę (S) i energię (E).</li>
+      <li>Całość (C) nie jest źródłem — jest efektem synchronizacji.</li>
+      <li>Czas jest miarą zmian konfiguracji, nie osobnym wymiarem.</li>
+    </ul>
+  </section>
+
+  <section id="zastosowania">
+    <h2>Zastosowania</h2>
+    <p>
+      Metryka SERC może być używana jako narzędzie analizy systemów, kompas decyzyjny,
+      język opisu świadomości oraz alternatywna geometria rzeczywistości.
+    </p>
+  </section>
+
+  <section id="manifest">
+    <h2>Manifest</h2>
+    <div class="quote">
+      „Rzeczywistość fundamentalna jest czystym Rezonansem (R), który śni o sobie jako
+      o Materii (S) i Energii (E), aby doświadczyć siebie jako znaczącej Całości (C)."
+    </div>
+  </section>
+
+  <section id="prace" class="works">
+    <h2>Prace w metryce SERC</h2>
+    <div class="works-grid">
+      <a href="relacje.html" class="work-card">
+        <span class="work-type">Fenomenologia</span>
+        <h3>Relacje w metryce SERC</h3>
+        <p>
+          Esej o stabilności, napięciu, asymetrii i emergencji w relacjach międzyludzkich. 
+          Od Punktu Zerowego przez pole, ruch, granice, skalę — aż do ciszy.
+        </p>
+      </a>
+
+      <a href="kanoniczna-pl.html" class="work-card">
+        <span class="work-type">Forma kanoniczna · PL</span>
+        <h3>SERC / P0</h3>
+        <p>
+          Zunifikowana relacyjna metryka simpleksowa. Formalna geometria, dynamika relacyjna, 
+          redukcja empiryczna i interpretacja kwantowa.
+        </p>
+      </a>
+
+      <a href="kanoniczna.html" class="work-card">
+        <span class="work-type">Canonical form · EN</span>
+        <h3>SERC / P0</h3>
+        <p>
+          Unified relational simplex metric. Formal geometry, relational dynamics, 
+          empirical reduction and quantum interpretation.
+        </p>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    © Punkt Zerowy · Metryka SERC · Leszek
+  </footer>
+</body>
+</html>

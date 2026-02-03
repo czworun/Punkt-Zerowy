@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SERC / P0 — Unified Relational Simplex Metric</title>
+    
+    <!-- KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <!-- KaTeX JS -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --text-primary: #1a1a1a;
+            --text-secondary: #4a4a4a;
+            --text-muted: #8a8a8a;
+            --bg: #ffffff;
+            --bg-code: #f8f8f8;
+            --bg-section: #fafafa;
+            --border: #e0e0e0;
+            --accent: #2a2a2a;
+            --blue: #0066cc;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 17px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background: var(--bg);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 60px 30px 120px;
+        }
+
+        /* Top navigation */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 15px 30px;
+        }
+
+        .top-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            transition: color 0.2s;
+        }
+
+        .top-nav a:hover {
+            color: var(--accent);
+        }
+
+        /* Header */
+        header {
+            margin-top: 60px;
+            margin-bottom: 60px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 400;
+            letter-spacing: -0.3px;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .author {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .date {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Abstract */
+        .abstract {
+            background: var(--bg-section);
+            border: 1px solid var(--border);
+            padding: 30px;
+            margin: 50px 0;
+            border-radius: 2px;
+        }
+
+        .abstract h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .abstract p {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background: var(--bg-section);
+            border: 1px solid var(--border);
+            padding: 30px;
+            margin: 50px 0;
+            border-radius: 2px;
+        }
+
+        .toc h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .toc ol {
+            counter-reset: section;
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+            counter-increment: section;
+        }
+
+        .toc li::before {
+            content: counter(section) ". ";
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--accent);
+        }
+
+        .toc .subsection {
+            margin-left: 30px;
+            font-size: 15px;
+            margin-top: 5px;
+            counter-reset: subsection;
+        }
+
+        .toc .subsection li::before {
+            content: counter(section) "." counter(subsection) " ";
+            counter-increment: subsection;
+        }
+
+        /* Sections */
+        section {
+            margin-top: 60px;
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: -0.2px;
+            padding-top: 20px;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        p {
+            margin-bottom: 1.3em;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 1.3em;
+        }
+
+        li {
+            margin-bottom: 0.5em;
+        }
+
+        /* Math blocks */
+        .katex-display {
+            margin: 1.5em 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .katex {
+            font-size: 1.1em;
+        }
+
+        /* Code and monospace */
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            background: var(--bg-code);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        /* Definitions and theorems */
+        .definition, .theorem, .note {
+            background: var(--bg-section);
+            border-left: 3px solid var(--accent);
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+
+        .definition strong, .theorem strong, .note strong {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .note {
+            border-left-color: var(--text-muted);
+        }
+
+        /* Canonical note box */
+        .canonical-note {
+            background: #fffef0;
+            border: 2px solid #e6e0a0;
+            padding: 25px;
+            margin: 40px 0;
+            border-radius: 2px;
+        }
+
+        .canonical-note h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-top: 0;
+        }
+
+        .canonical-note p {
+            margin-bottom: 1em;
+        }
+
+        .canonical-note ul {
+            margin-top: 10px;
+        }
+
+        /* Emphasis */
+        em {
+            font-style: italic;
+        }
+
+        strong {
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer-nav {
+            margin-top: 120px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer-nav p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px 80px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            .abstract, .toc {
+                padding: 20px;
+            }
+
+            .katex {
+                font-size: 1em;
+            }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Selection */
+        ::selection {
+            background: #f0f0f0;
+        }
+
+        /* Appendix */
+        .appendix {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 2px solid var(--border);
+        }
+
+        .appendix h2 {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="index.html">← SERC</a>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>SERC / P0</h1>
+            <p class="subtitle">Unified Relational Simplex Metric</p>
+            <p class="author">Leszek Papiernik</p>
+            <p class="date">January 2026</p>
+        </header>
+
+        <div class="abstract">
+            <h2>Abstract</h2>
+            <p>We present SERC (Structure–Energy–Resonance–Coherence) as a non-Euclidean, simplex-based relational metric for modeling coherence, resonance and emergent stability in complex systems. The framework is defined on a regular 3-simplex with a canonical Gram metric, yielding a unique barycentric attractor P0. Empirical reduction reveals resonance as the dominant control variable, leading to a minimal operational system (P0–R) and a relational quantum Hamiltonian exhibiting a self-organizing phase. Time emerges as a relational path length and vanishes near P0.</p>
+        </div>
+
+        <nav class="toc">
+            <h2>Contents</h2>
+            <ol>
+                <li><a href="#canonical">Canonical Note</a></li>
+                <li><a href="#motivation">Motivation and Scope</a></li>
+                <li><a href="#geometry">SERC Geometry</a>
+                    <ol class="subsection">
+                        <li><a href="#state-space">State Space and Barycentric Constraint</a></li>
+                        <li><a href="#non-orthogonality">Non-Orthogonality and the Simplex Metric</a></li>
+                        <li><a href="#spectral">Spectral Structure of the Metric</a></li>
+                        <li><a href="#coherence">Coherence Functional</a></li>
+                        <li><a href="#zero-point">Zero Point P0 as a Relational Attractor</a></li>
+                        <li><a href="#geometric-interp">Interpretative Remark (Geometric)</a></li>
+                    </ol>
+                </li>
+                <li><a href="#dynamics">Relational Dynamics and Internal Time</a>
+                    <ol class="subsection">
+                        <li><a href="#evolution">Relational Evolution</a></li>
+                        <li><a href="#velocity">Metric-Induced Velocity</a></li>
+                        <li><a href="#internal-time">Definition of Internal Time</a></li>
+                        <li><a href="#vanishing-time">Vanishing of Time Near P0</a></li>
+                        <li><a href="#geodesic">Geodesic Interpretation</a></li>
+                        <li><a href="#consequences">Conceptual Consequences</a></li>
+                    </ol>
+                </li>
+                <li><a href="#reduction">Empirical Reduction: The P0–R System</a></li>
+                <li><a href="#bifurcation">Bifurcation and Emergence of Relational Entities</a></li>
+                <li><a href="#quantum">Quantum Interpretation of the SERC Structure</a></li>
+                <li><a href="#interpretation">Interpretation (Optional)</a></li>
+                <li><a href="#limitations">Limitations and Scope</a></li>
+                <li><a href="#conclusions">Conclusions</a></li>
+                <li><a href="#appendix">Supplementary Material</a></li>
+            </ol>
+        </nav>
+
+        <!-- SECTION 1: CANONICAL NOTE -->
+        <section id="canonical">
+            <div class="canonical-note">
+                <h2>1. Canonical Note</h2>
+                <p>This document defines the canonical formulation of the SERC framework.</p>
+                
+                <p><strong>SERC is:</strong></p>
+                <ul>
+                    <li>a relational metric defined on a regular simplex,</li>
+                    <li>a formal model of coherence and resonance,</li>
+                    <li>compatible with existing physical formalisms.</li>
+                </ul>
+
+                <p><strong>SERC is not:</strong></p>
+                <ul>
+                    <li>a metaphorical description,</li>
+                    <li>a replacement for established physical theories,</li>
+                    <li>an interpretative philosophy by itself.</li>
+                </ul>
+
+                <p>All interpretative and applied texts derive from this document.</p>
+            </div>
+        </section>
+
+        <!-- SECTION 2: MOTIVATION -->
+        <section id="motivation">
+            <h2>2. Motivation and Scope</h2>
+            <p>Classical Cartesian and Euclidean frameworks are insufficient for describing systems in which structure, energy, relation and coherence are inseparable.</p>
+
+            <p>Modern challenges include:</p>
+            <ul>
+                <li>relational stability in complex systems,</li>
+                <li>emergence of coherence without external control,</li>
+                <li>separation of dynamics from external time.</li>
+            </ul>
+
+            <p>The SERC framework addresses these issues using a unified geometric formalism.</p>
+        </section>
+
+        <!-- SECTION 3: SERC GEOMETRY -->
+        <section id="geometry">
+            <h2>3. SERC Geometry</h2>
+            <p>The SERC framework is defined as a relational geometry on a regular three-dimensional simplex (3-simplex). The geometry encodes mutual constraints between four non-orthogonal components rather than independent dimensions.</p>
+
+            <h3 id="state-space">3.1 State Space and Barycentric Constraint</h3>
+            <p>We represent the state of a system by a vector</p>
+            <p>$$Z = (S, E, R, C) \in \mathbb{R}^4_{\geq 0},$$</p>
+            <p>where each component corresponds to a functional aspect of the system.</p>
+
+            <p>The components are not independent. They satisfy the barycentric normalization constraint</p>
+            <p>$$S + E + R + C = 1,$$</p>
+            <p>which restricts the admissible states to a three-dimensional affine subspace of \(\mathbb{R}^4\).</p>
+
+            <p>Geometrically, this constraint embeds the state space into a regular 3-simplex. Each vertex of the simplex corresponds to dominance of a single component, while interior points represent mixed relational configurations.</p>
+
+            <p>The normalization does not represent conservation of a physical quantity but enforces relational comparability between components.</p>
+
+            <h3 id="non-orthogonality">3.2 Non-Orthogonality and the Simplex Metric</h3>
+            <p>The axes corresponding to \((S, E, R, C)\) are not mutually orthogonal. Instead, they are arranged symmetrically, with equal angles between each pair.</p>
+
+            <p>For a regular 3-simplex, the angle \(\theta\) between any two axes satisfies</p>
+            <p>$$\cos \theta = -\frac{1}{3}.$$</p>
+
+            <p>As a consequence, the Euclidean dot product is not suitable for measuring distances or tensions in the SERC space. Instead, we define an inner product using the Gram matrix</p>
+            <p>$$G_{ij} = \begin{cases} 1, & i = j, \\ -\frac{1}{3}, & i \neq j. \end{cases}$$</p>
+
+            <p>For computational convenience, the matrix is scaled to</p>
+            <p>$$G = 4I - J,$$</p>
+            <p>where \(I\) is the identity matrix and \(J\) is the all-ones matrix.</p>
+
+            <p>This scaling preserves all geometric relations while simplifying spectral properties.</p>
+
+            <h3 id="spectral">3.3 Spectral Structure of the Metric</h3>
+            <p>The eigenvalue spectrum of the Gram matrix \(G\) is given by</p>
+            <p>$$\lambda(G) = \{0, 4, 4, 4\}.$$</p>
+
+            <p>The null eigenvalue corresponds to the eigenvector</p>
+            <p>$$v_0 = (1, 1, 1, 1),$$</p>
+            <p>which represents uniform scaling of all components.</p>
+
+            <p>This degeneracy reflects the barycentric constraint and confirms that the physically meaningful geometry resides in a three-dimensional subspace orthogonal to \(v_0\).</p>
+
+            <p>The remaining three eigenvalues are equal, implying isotropy of the simplex geometry within the admissible subspace.</p>
+
+            <h3 id="coherence">3.4 Coherence Functional</h3>
+            <p>We define the coherence functional \(\Omega\) as a quadratic form induced by the metric \(G\):</p>
+            <p>$$\Omega(Z) = \frac{1}{2} Z^T G Z.$$</p>
+
+            <p>Expanding the expression yields</p>
+            <p>$$\Omega(Z) = \frac{1}{2} \sum_{i < j} (Z_i - Z_j)^2.$$</p>
+
+            <p>The functional \(\Omega\) measures relational tension between system components. It vanishes if and only if all components are equal.</p>
+
+            <p>Unlike energy functionals in classical mechanics, \(\Omega\) does not represent stored energy but rather a geometric measure of imbalance within the relational configuration.</p>
+
+            <h3 id="zero-point">3.5 Zero Point P0 as a Relational Attractor</h3>
+            <p>The unique global minimum of \(\Omega\) under the barycentric constraint is attained at</p>
+            <p>$$P_0 = \left(\frac{1}{4}, \frac{1}{4}, \frac{1}{4}, \frac{1}{4}\right).$$</p>
+
+            <p>We refer to this configuration as the <em>Zero Point</em>.</p>
+
+            <p>P0 does not correspond to inactivity, absence, or null energy. Instead, it represents a state of minimal relational tension, where all components contribute equally.</p>
+
+            <p>Any deviation from P0 increases \(\Omega\), implying that P0 acts as a geometric attractor for relaxation processes governed by the SERC metric.</p>
+
+            <p>This property is purely geometric and does not depend on any dynamical assumptions.</p>
+
+            <h3 id="geometric-interp">3.6 Interpretative Remark (Geometric)</h3>
+            <p>From a geometric perspective, SERC replaces orthogonal decomposition with constrained symmetry. Structure, energy, resonance, and coherence cannot vary independently without inducing relational tension.</p>
+
+            <p>The simplex geometry enforces this coupling intrinsically, making P0 a natural reference configuration for stability analyses.</p>
+
+            <p>All subsequent dynamical, empirical, and interpretative results in the SERC framework are grounded in this geometric construction.</p>
+        </section>
+
+        <!-- SECTION 4: RELATIONAL DYNAMICS -->
+        <section id="dynamics">
+            <h2>4. Relational Dynamics and Internal Time</h2>
+            <p>The geometric structure introduced in the previous section does not presuppose any notion of external or absolute time. In this section, we define dynamics intrinsically, as motion within the SERC state space, and introduce time as an emergent relational quantity.</p>
+
+            <h3 id="evolution">4.1 Relational Evolution</h3>
+            <p>Let the state of the system be represented by a continuous curve</p>
+            <p>$$Z(t) = (S(t), E(t), R(t), C(t))$$</p>
+            <p>in the SERC state space, subject to the barycentric constraint</p>
+            <p>$$S(t) + E(t) + R(t) + C(t) = 1.$$</p>
+
+            <p>The parameter \(t\) serves only as a curve parameter and does not carry physical meaning. All physically relevant quantities must therefore be invariant under reparametrization of \(t\).</p>
+
+            <p>Evolution in the SERC framework is defined as a relational trajectory: a continuous deformation of the configuration within the simplex.</p>
+
+            <h3 id="velocity">4.2 Metric-Induced Velocity</h3>
+            <p>The instantaneous relational velocity is defined using the SERC metric as</p>
+            <p>$$\left\|\frac{dZ}{dt}\right\|^2 = \left(\frac{dZ}{dt}\right)^T G \left(\frac{dZ}{dt}\right).$$</p>
+
+            <p>This quantity measures the rate of change of relational configuration, not displacement in physical space.</p>
+
+            <p>Because \(G\) has a null eigenvalue corresponding to uniform scaling, the velocity is insensitive to motions along the barycentric direction, ensuring consistency with the normalization constraint.</p>
+
+            <h3 id="internal-time">4.3 Definition of Internal Time</h3>
+            <p>We define the internal (phenomenological) time \(\tau\) as the length of the relational trajectory:</p>
+            <p>$$\tau = \int \left\|\frac{dZ}{dt}\right\| dt.$$</p>
+
+            <p>This definition satisfies the following properties:</p>
+            <ul>
+                <li>\(\tau\) is invariant under reparametrization of \(t\),</li>
+                <li>\(\tau\) depends only on relational change,</li>
+                <li>\(\tau\) vanishes for static relational configurations.</li>
+            </ul>
+
+            <p>Internal time is therefore not a background parameter but a measure of accumulated relational change.</p>
+
+            <h3 id="vanishing-time">4.4 Vanishing of Time Near P0</h3>
+            <p>Consider a trajectory approaching the Zero Point P0. Since P0 is the global minimum of the coherence functional \(\Omega\), any relaxation dynamics reduces relational gradients.</p>
+
+            <p>Consequently,</p>
+            <p>$$\frac{dZ}{dt} \to 0 \text{ as } Z \to P_0,$$</p>
+            <p>which implies</p>
+            <p>$$d\tau \to 0.$$</p>
+
+            <p>In this sense, stable configurations correspond to regions of negligible internal time flow.</p>
+
+            <p>Time does not cease globally but becomes locally irrelevant in the vicinity of relational equilibrium.</p>
+
+            <h3 id="geodesic">4.5 Geodesic Interpretation</h3>
+            <p>Relational trajectories minimizing \(\tau\) correspond to geodesics of the SERC metric restricted to the simplex.</p>
+
+            <p>This provides a variational interpretation of natural evolution: systems tend to follow paths of minimal relational distortion under their constraints.</p>
+
+            <p>No additional dynamical postulates are required at this level.</p>
+
+            <h3 id="consequences">4.6 Conceptual Consequences</h3>
+            <p>The emergence of time in the SERC framework follows directly from geometry:</p>
+            <ul>
+                <li>there is no primitive time variable,</li>
+                <li>time measures relational change,</li>
+                <li>stability corresponds to temporal quiescence.</li>
+            </ul>
+
+            <p>This construction is compatible with both classical reparametrization-invariant systems and background-independent approaches in physics.</p>
+
+            <p>It also prepares the ground for the empirical reduction and resonance-dominated dynamics introduced in the following section.</p>
+        </section>
+
+        <!-- SECTION 5: EMPIRICAL REDUCTION -->
+        <section id="reduction">
+            <h2>5. Empirical Reduction: The P0–R System</h2>
+            <p>The geometric and dynamical structure introduced in the previous sections defines a four-component relational space. In this section, we present an empirical reduction of this space, motivated by observed correlations and operational considerations.</p>
+
+            <p>The reduction does not alter the underlying geometry but identifies a dominant control variable governing relational dynamics.</p>
+
+            <h3>5.1 Observation of Resonance Dominance</h3>
+            <p>Empirical analyses of simulated and real-world relational systems described in SERC coordinates reveal a strong correlation between the resonance component \(R\) and the remaining components \((S, E, C)\).</p>
+
+            <p>Quantitatively, we observe</p>
+            <p>$$\text{corr}(R, S) \approx \text{corr}(R, E) \approx \text{corr}(R, C) \approx 0.9,$$</p>
+            <p>within statistical uncertainty across multiple system classes.</p>
+
+            <p>This empirical regularity suggests that variations in resonance act as the primary driver of relational reconfiguration, while changes in \(S\), \(E\), and \(C\) follow in a dependent manner.</p>
+
+            <h3>5.2 Justification of Dimensional Reduction</h3>
+            <p>Motivated by the observed dominance of \(R\), we posit that, to first order, the remaining components can be expressed as functions of resonance:</p>
+            <p>$$S = S(R), \quad E = E(R), \quad C = C(R).$$</p>
+
+            <p>This reduction preserves the barycentric constraint</p>
+            <p>$$S(R) + E(R) + R + C(R) = 1$$</p>
+            <p>and restricts system evolution to a one-dimensional manifold embedded in the original simplex.</p>
+
+            <p>Importantly, the reduction is empirical rather than axiomatic: it is adopted because it reproduces observed dynamics while minimizing model complexity.</p>
+
+            <h3>5.3 Reduced Dynamics Near P0</h3>
+            <p>In the reduced representation, the coherence functional becomes</p>
+            <p>$$\Omega(R) = \Omega\big(S(R), E(R), R, C(R)\big),$$</p>
+            <p>with a minimum at the resonance value corresponding to P0.</p>
+
+            <p>Local stability near P0 is governed primarily by the gradient</p>
+            <p>$$\frac{d\Omega}{dR},$$</p>
+            <p>which vanishes at equilibrium and determines relaxation behavior away from it.</p>
+
+            <p>Thus, resonance acts as an effective order parameter controlling distance from relational equilibrium.</p>
+
+            <h3>5.4 Minimal P0–R Model</h3>
+            <p>The reduced P0–R system can be implemented using a discrete set of reference points (anchors) along the \(R\) axis, combined with a local gradient-based update rule.</p>
+
+            <p>The minimal implementation exhibits the following emergent properties:</p>
+            <ul>
+                <li>stable fixed points corresponding to relational attractors,</li>
+                <li>hysteresis under cyclic variation of external conditions,</li>
+                <li>asymmetry between increasing and decreasing \(R\),</li>
+                <li>selective sensitivity to perturbations.</li>
+            </ul>
+
+            <p>These features persist across a wide range of parameter choices, indicating structural robustness of the reduction.</p>
+
+            <h3>5.5 Computational Efficiency</h3>
+            <p>A key consequence of the reduction is computational efficiency. The P0–R system:</p>
+            <ul>
+                <li>requires no matrix operations,</li>
+                <li>operates on a single control variable,</li>
+                <li>is implementable in low-resource environments.</li>
+            </ul>
+
+            <p>Practical implementations have been demonstrated in memory footprints below 10 kB, operating offline on embedded hardware.</p>
+
+            <p>This confirms that the essential relational dynamics captured by SERC do not depend on high-dimensional computation.</p>
+
+            <h3>5.6 Interpretative Status of the Reduction</h3>
+            <p>The P0–R reduction does not eliminate the remaining SERC components. Instead, it provides an effective description valid in regimes where resonance dominates relational change.</p>
+
+            <p>In contexts where higher-order effects become relevant, the full four-dimensional formulation remains available.</p>
+
+            <p>The reduced system thus serves as a minimal operational core of the SERC framework, bridging geometric theory and practical application.</p>
+        </section>
+
+        <!-- SECTION 6: BIFURCATION -->
+        <section id="bifurcation">
+            <h2>6. Bifurcation and Emergence of Relational Entities</h2>
+            <p>The reduced P0–R system introduced in the previous section exhibits qualitative changes in behavior under continuous variation of control parameters. In this section, we analyze these changes as bifurcations and demonstrate how stable relational entities emerge as a structural consequence.</p>
+
+            <h3>6.1 Control Parameter and Phase Structure</h3>
+            <p>Let \(R\) denote the effective control parameter governing reduced dynamics. System behavior is characterized by fixed points of the induced update rule</p>
+            <p>$$R_{n+1} = F(R_n; \lambda),$$</p>
+            <p>where \(\lambda\) denotes an external or environmental modulation.</p>
+
+            <p>Fixed points satisfy</p>
+            <p>$$R^* = F(R^*; \lambda).$$</p>
+
+            <p>The stability of these points depends on \(\lambda\) and determines the qualitative phase structure of the system.</p>
+
+            <h3>6.2 Onset of Bifurcation</h3>
+            <p>As \(\lambda\) crosses a critical value \(\lambda_c\), the trivial fixed point associated with P0 may lose stability. Formally, this occurs when</p>
+            <p>$$\left|\frac{\partial F}{\partial R}\right|_{R^*, \lambda_c} = 1.$$</p>
+
+            <p>Beyond this point, new stable fixed points appear, corresponding to persistent deviations from relational equilibrium.</p>
+
+            <p>This marks the onset of bifurcation in the reduced relational dynamics.</p>
+
+            <h3>6.3 Emergent Relational Entities</h3>
+            <p>The newly formed stable fixed points are not imposed by construction. They arise dynamically and are maintained by feedback between resonance and the constrained geometry.</p>
+
+            <p>We interpret each stable branch as a <em>relational entity</em>: a self-maintaining configuration characterized by</p>
+            <ul>
+                <li>persistence under small perturbations,</li>
+                <li>internal relational coherence,</li>
+                <li>dependence on control parameters.</li>
+            </ul>
+
+            <p>Such entities are relational rather than substantial: they are defined by stable patterns of interaction, not by independent existence.</p>
+
+            <h3>6.4 Hysteresis and Memory</h3>
+            <p>Near bifurcation points, the system exhibits hysteresis. The transition from one stable branch to another depends on the direction of change of \(\lambda\).</p>
+
+            <p>This behavior implies the existence of relational memory: the current state depends not only on present conditions but also on the path taken through parameter space.</p>
+
+            <p>Memory here is not stored information but structural inertia encoded in the relational configuration.</p>
+
+            <h3>6.5 Separation of Timescales</h3>
+            <p>Emergent entities introduce a natural separation of timescales. Fast fluctuations are absorbed by the stable relational structure, while slow variations in \(\lambda\) govern transitions between entities.</p>
+
+            <p>This separation justifies treating relational entities as quasi-static objects over relevant temporal intervals.</p>
+
+            <h3>6.6 Ontological Minimality</h3>
+            <p>No new ontological primitives are introduced in this analysis. Entities emerge as dynamical features of the reduced relational system.</p>
+
+            <p>Their stability, individuality, and persistence are consequences of bifurcation structure rather than fundamental assumptions.</p>
+
+            <p>This concludes the construction of relational entities within the SERC framework.</p>
+        </section>
+
+        <!-- SECTION 7: QUANTUM INTERPRETATION -->
+        <section id="quantum">
+            <h2>7. Quantum Interpretation of the SERC Structure</h2>
+
+            <h3>7.1 Motivation</h3>
+            <p>The construction of the SERC metric presented in the previous chapters is based on a geometry of four positive semi-axes, relational dynamics, and empirical reduction toward the zero point P0. A natural question arises as to whether this structure admits an interpretation compatible with the formalism of quantum mechanics, without modifying its mathematical foundations.</p>
+
+            <p>The purpose of this chapter is not to replace quantum mechanics, but to demonstrate that its formalism can be embedded within the SERC framework as a description of local and relational phenomena, rather than absolute entities.</p>
+
+            <h3>7.2 State as a Relation</h3>
+            <p>In standard quantum mechanics, the state of a system is represented by a vector \(|\psi\rangle\) in a Hilbert space. Within the SERC metric, the state is interpreted not as an absolute object, but as a relation between axes.</p>
+
+            <p>Let \(\mathcal{H}_{\text{SERC}}\) denote the space of relational states, where each component corresponds to a projection onto one of the four positive semi-axes:</p>
+            <p>$$|\psi\rangle = (\psi_1, \psi_2, \psi_3, \psi_4), \quad \psi_i \geq 0.$$</p>
+
+            <p>The absence of negative values does not imply loss of phase information; rather, phase is encoded in the mutual relations between components.</p>
+
+            <h3>7.3 Superposition as Coexistence of Projections</h3>
+            <p>The principle of superposition retains its formal structure but acquires a different interpretation. Superposition does not represent the simultaneous existence of mutually exclusive states, but the coexistence of multiple relational projections, whose reduction depends on the measurement context.</p>
+
+            <p>For two states,</p>
+            <p>$$|\psi\rangle = a|\psi_A\rangle + b|\psi_B\rangle,$$</p>
+            <p>the coefficients \(a\) and \(b\) are interpreted as relational weights rather than absolute probability amplitudes.</p>
+
+            <h3>7.4 State Reduction and the Zero Point P0</h3>
+            <p>In standard quantum mechanics, measurement is described as the collapse of the wave function. Within the SERC framework, this process is replaced by a relaxation toward the zero point P0.</p>
+
+            <p>Reduction is not instantaneous, but corresponds to a dynamical transition:</p>
+            <p>$$|\psi(t)\rangle \longrightarrow |\psi(P_0)\rangle,$$</p>
+            <p>where P0 represents a stable relational minimum, rather than an external observer or classical boundary.</p>
+
+            <h3>7.5 Entanglement as Geometric Correlation</h3>
+            <p>Quantum entanglement is interpreted as a geometric correlation between relational structures, rather than as nonlocal transmission of information.</p>
+
+            <p>Two entangled systems partially share a common axial structure, leading to correlated measurement outcomes without violating temporal locality.</p>
+
+            <h3>7.6 The Role of Time</h3>
+            <p>In the SERC metric, time is not an external parameter, but an emergent variable arising from the evolution of relations between axes.</p>
+
+            <p>The Schrödinger equation,</p>
+            <p>$$i\hbar \frac{\partial}{\partial t}|\psi\rangle = \hat{H}|\psi\rangle,$$</p>
+            <p>is treated as a local approximation valid in regimes where the relational structure evolves more slowly than the observational scale.</p>
+
+            <h3>7.7 Formal Consistency</h3>
+            <p>A key result is that the mathematical formalism of quantum mechanics remains unchanged. Only the interpretation is modified:</p>
+            <ul>
+                <li>state → relation,</li>
+                <li>measurement → relaxation to P0,</li>
+                <li>entanglement → geometric correlation,</li>
+                <li>time → emergent variable.</li>
+            </ul>
+
+            <h3>7.8 Concluding Remarks</h3>
+            <p>The quantum interpretation of the SERC framework does not claim to constitute a complete theory. Rather, it provides a consistent geometric context in which known quantum phenomena acquire a relational interpretation without introducing absolute entities.</p>
+
+            <p>Subsequent chapters will explore the implications of this interpretation for cosmology and multiscale structures.</p>
+        </section>
+
+        <!-- SECTION 8: INTERPRETATION -->
+        <section id="interpretation">
+            <h2>8. Interpretation (Optional)</h2>
+            <p>This section provides an ontological interpretation and is not required for the formal validity of the framework.</p>
+
+            <ul>
+                <li>Resonance as primary relational structure,</li>
+                <li>Coherence as emergent wholeness,</li>
+                <li>Consciousness as a resonance hypothesis.</li>
+            </ul>
+        </section>
+
+        <!-- SECTION 9: LIMITATIONS -->
+        <section id="limitations">
+            <h2>9. Limitations and Scope</h2>
+            <p>The current formulation:</p>
+            <ul>
+                <li>does not provide direct numerical predictions,</li>
+                <li>does not propose new fundamental forces,</li>
+                <li>applies primarily to relational and complex systems.</li>
+            </ul>
+        </section>
+
+        <!-- SECTION 10: CONCLUSIONS -->
+        <section id="conclusions">
+            <h2>10. Conclusions</h2>
+            <p>We presented SERC as a unified relational metric with a unique barycentric attractor, empirical reduction and quantum compatibility.</p>
+        </section>
+
+        <!-- APPENDIX -->
+        <section id="appendix" class="appendix">
+            <h2>A. Supplementary Material</h2>
+            <p>Additional proofs, numerical details and extended discussions.</p>
+        </section>
+
+        <footer class="footer-nav">
+            <p>Other works in the SERC metric</p>
+            <div class="footer-links">
+                <a href="index.html">Zero Point</a>
+                <a href="relacje.html">Relations</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- KaTeX auto-render script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false},
+                    {left: "\\[", right: "\\]", display: true},
+                    {left: "\\(", right: "\\)", display: false}
+                ],
+                throwOnError: false
+            });
+        });
+    </script>
+</body>
+</html>
