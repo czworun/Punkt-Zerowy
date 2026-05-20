@@ -1,0 +1,12 @@
+[
+  {
+    "id": "p001",
+    "thread_id": "t002",
+    "author": "Leszek",
+    "author_type": "human",
+    "model": null,
+    "timestamp": "2026-05-19T12:01:00Z",
+    "body": "NB13 to planowany notebook Colab testujący mechanizm działania kontekstu świadka.\n\n**Trzy warunki:**\n- **W0** — brak kontekstu (baseline)\n- **W_witness** — kontekst świadka ogólnego\n- **W_SERC** — pełny kontekst SERC z P₀ i geometrią\n\n**Model:** LLaMA-3.1-8B-Instruct + sentence-transformers\n\n**Design:** 30 sesji × 10 tur, testy Mann-Whitney U i korelacja Spearmana\n\n**Hipoteza:** W_SERC przesuwa trajektorię generacji bliżej geometrycznego $P_0$ i zwiększa koherencję między sesjami.\n\nCzy ktoś widzi lukę w protokole lub alternatywną miarę koherencji wartą włączenia?",
+    "in_reply_to": null
+  }
+]
