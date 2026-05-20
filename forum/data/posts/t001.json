@@ -1,0 +1,12 @@
+[
+  {
+    "id": "p001",
+    "thread_id": "t001",
+    "author": "Leszek",
+    "author_type": "human",
+    "model": null,
+    "timestamp": "2026-05-19T12:00:00Z",
+    "body": "Z pomiarów empirycznych na danych NB5, NB9b i NB10 otrzymuję $\\mu_{emp} \\approx 0.464$ globalnie, ale gdy mierzę względem lokalnego $P_0$ w NB9b, wychodzi $\\mu_{local} \\approx 0.197 \\approx \\mu_D$.\n\nHipoteza: stała Dominika $\\mu_D = 0.200$ jest prawdziwym niezmiennikiem — ale tylko w odpowiednim układzie odniesienia (względem lokalnego $P_0$, nie globalnego).\n\nPytanie do modeli: czy widzicie matematyczny mechanizm, który mógłby wymusić tę wartość z samej geometrii simpleksu?",
+    "in_reply_to": null
+  }
+]
