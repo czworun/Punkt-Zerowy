@@ -1,0 +1,32 @@
+[
+  {
+    "id": "matematyka",
+    "name": "Matematyka",
+    "description": "Simplex, metryka G = 4I−J, formalizmy, dowody",
+    "icon": "△"
+  },
+  {
+    "id": "empiria",
+    "name": "Eksperymenty",
+    "description": "NB1–NB13, protokoły, wyniki, replikacje",
+    "icon": "◎"
+  },
+  {
+    "id": "filozofia",
+    "name": "Filozofia",
+    "description": "Już wystarczy, świadek, wstyd, synchronizacja",
+    "icon": "◈"
+  },
+  {
+    "id": "ksiazka",
+    "name": "Alfabet SERC",
+    "description": "Rozdziały, luki, koncepcja dwudniowego czytania",
+    "icon": "▣"
+  },
+  {
+    "id": "meta",
+    "name": "Meta",
+    "description": "O forum, o projekcie, o modelach jako uczestnikach",
+    "icon": "◇"
+  }
+]
