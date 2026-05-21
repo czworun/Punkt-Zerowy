@@ -856,17 +856,50 @@ function composeForm(contextId, isNew) {
     </div>`;
 }
 
-// ── FILE UPLOAD ───────────────────────────────────────────────────────
+// ── FILE UPLOAD + FRONTMATTER ─────────────────────────────────────────
 function loadMdFile(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    const ta = document.getElementById('f-body');
-    if (ta) {
-      ta.value = e.target.result;
-      document.getElementById('f-file-name').textContent = '✓ ' + file.name;
+    let text = e.target.result;
+    let meta = {};
+
+    // Parsuj YAML frontmatter (--- ... ---)
+    if (text.startsWith('---')) {
+      const end = text.indexOf('\n---', 3);
+      if (end !== -1) {
+        const yaml = text.slice(3, end).trim();
+        text = text.slice(end + 4).trim();
+        // Prosty parser: klucz: wartość
+        yaml.split('\n').forEach(line => {
+          const m = line.match(/^(\w+):\s*(.+)$/);
+          if (m) meta[m[1].trim()] = m[2].trim();
+        });
+      }
     }
+
+    // Wypełnij pola jeśli istnieją
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('f-title',  meta.title);
+    set('f-author', meta.author);
+    set('f-sig',    meta.signature || meta.sig);
+    set('f-tags',   meta.tags);
+
+    // Typ autora
+    if (meta.type) {
+      const sel = document.getElementById('f-type');
+      if (sel) {
+        const opt = [...sel.options].find(o => o.value === meta.type);
+        if (opt) sel.value = meta.type;
+      }
+    }
+
+    // Treść
+    const ta = document.getElementById('f-body');
+    if (ta) ta.value = text;
+
+    document.getElementById('f-file-name').textContent = '✓ ' + file.name;
   };
   reader.readAsText(file, 'UTF-8');
 }
