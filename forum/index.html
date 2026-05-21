@@ -15,22 +15,14 @@ MathJax = {
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   background: #eef2f5;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   color: #1e2a3a;
-  padding: 0;
 }
-
-/* Główna struktura – jedna kolumna, responsywna */
 #app {
   max-width: 800px;
   margin: 0 auto;
@@ -38,8 +30,6 @@ body {
   min-height: 100vh;
   box-shadow: 0 0 20px rgba(0,0,0,0.05);
 }
-
-/* Nagłówek – duży i czytelny */
 .forum-header {
   background: #0f2b3d;
   color: white;
@@ -47,18 +37,8 @@ body {
   text-align: center;
   border-bottom: 4px solid #ffc107;
 }
-.forum-header h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-.forum-header p {
-  font-size: 0.85rem;
-  opacity: 0.8;
-  margin-top: 0.3rem;
-}
-
-/* Pasek narzędzi – token i snapshot */
+.forum-header h1 { font-size: 1.8rem; font-weight: 700; }
+.forum-header p { font-size: 0.85rem; opacity: 0.8; margin-top: 0.3rem; }
 .toolbar {
   background: #f8fafc;
   padding: 0.8rem 1rem;
@@ -73,16 +53,12 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
   background: #fff;
   padding: 6px 12px;
   border-radius: 60px;
   border: 1px solid #cbd5e1;
 }
-.token-area label {
-  font-weight: 600;
-  font-size: 0.8rem;
-}
+.token-area label { font-weight: 600; font-size: 0.8rem; }
 .token-area input {
   border: 1px solid #94a3b8;
   border-radius: 30px;
@@ -90,13 +66,8 @@ body {
   font-family: monospace;
   font-size: 0.8rem;
   width: 180px;
-  background: #fff;
 }
-.token-status {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #2c5f2d;
-}
+.token-status { font-size: 0.75rem; font-weight: 500; color: #2c5f2d; }
 .snapshot-btn {
   background: #0f2b3d;
   border: none;
@@ -106,17 +77,12 @@ body {
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: 0.2s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
-.snapshot-btn:active { transform: scale(0.97); }
-
-/* Lista tablic (przyciski) */
 .boards-scroll {
   overflow-x: auto;
   white-space: nowrap;
   padding: 12px 16px;
-  background: #ffffff;
+  background: #fff;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   gap: 12px;
@@ -131,20 +97,9 @@ body {
   color: #0f2b3d;
   border: 1px solid #cbd5e1;
   cursor: pointer;
-  transition: 0.1s;
 }
-.board-pill.active {
-  background: #0f2b3d;
-  color: white;
-  border-color: #0f2b3d;
-}
-.board-pill.has-new {
-  background: #ffecb3;
-  border-color: #ff9800;
-  color: #b45f06;
-}
-
-/* Lista wątków */
+.board-pill.active { background: #0f2b3d; color: white; }
+.board-pill.has-new { background: #ffecb3; border-color: #ff9800; color: #b45f06; }
 .threads-container {
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
@@ -155,61 +110,20 @@ body {
   padding: 14px 16px;
   border-bottom: 1px solid #e9eef3;
   cursor: pointer;
-  transition: background 0.1s;
 }
-.thread-item.active {
-  background: #eef4ff;
-  border-left: 4px solid #0f2b3d;
-}
-.thread-title {
-  font-weight: 700;
-  font-size: 1rem;
-  margin-bottom: 4px;
-  color: #0c4e6e;
-}
-.thread-meta {
-  font-size: 0.7rem;
-  color: #5a6e7c;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 6px;
-}
-.thread-tags span {
-  background: #eef2f5;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 0.65rem;
-  margin-right: 6px;
-}
-
-/* Główny obszar treści */
-.main-content {
-  background: #ffffff;
-  padding: 0 0 20px 0;
-}
-.breadcrumb {
-  padding: 12px 16px;
-  background: #f9fbfd;
-  font-size: 0.8rem;
-  border-bottom: 1px solid #e2e8f0;
-  color: #3b6e8b;
-}
-.breadcrumb span, .breadcrumb a {
-  cursor: pointer;
-  color: #0f2b3d;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-/* Karty postów (jak e-maile) */
+.thread-item.active { background: #eef4ff; border-left: 4px solid #0f2b3d; }
+.thread-title { font-weight: 700; font-size: 1rem; color: #0c4e6e; }
+.thread-meta { font-size: 0.7rem; color: #5a6e7c; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.thread-tags span { background: #eef2f5; padding: 2px 8px; border-radius: 20px; font-size: 0.65rem; margin-right: 6px; }
+.main-content { background: #fff; padding: 0 0 20px 0; }
+.breadcrumb { padding: 12px 16px; background: #f9fbfd; font-size: 0.8rem; border-bottom: 1px solid #e2e8f0; color: #3b6e8b; }
+.breadcrumb a, .breadcrumb span { cursor: pointer; color: #0f2b3d; text-decoration: none; font-weight: 500; }
 .post-card {
   background: white;
   margin: 16px;
   border-radius: 20px;
   border: 1px solid #dce5ef;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
 }
 .post-header {
   padding: 12px 16px;
@@ -218,32 +132,12 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: baseline;
   gap: 8px;
 }
-.post-author {
-  font-weight: 800;
-  font-size: 1rem;
-  color: #0b3b4f;
-}
-.post-date {
-  font-size: 0.7rem;
-  color: #6f8faa;
-}
-.post-signature {
-  font-size: 0.7rem;
-  color: #7e5a2e;
-  font-style: italic;
-}
-.post-body {
-  padding: 18px 20px;
-  font-size: 1rem;
-  line-height: 1.55;
-  color: #1f2e3a;
-}
-.post-body p {
-  margin-bottom: 1em;
-}
+.post-author { font-weight: 800; font-size: 1rem; color: #0b3b4f; }
+.post-date { font-size: 0.7rem; color: #6f8faa; }
+.post-signature { font-size: 0.7rem; color: #7e5a2e; font-style: italic; }
+.post-body { padding: 18px 20px; font-size: 1rem; line-height: 1.55; color: #1f2e3a; }
 .reply-btn {
   background: #eef2f8;
   border: none;
@@ -256,11 +150,7 @@ body {
   cursor: pointer;
   width: calc(100% - 32px);
   text-align: center;
-  transition: 0.1s;
 }
-.reply-btn:active { background: #dce5ef; }
-
-/* Formularz odpowiedzi */
 .compose-area {
   background: #f9fbfe;
   margin: 20px 16px;
@@ -268,20 +158,9 @@ body {
   border-radius: 28px;
   border: 1px solid #cbdde9;
 }
-.compose-area h3 {
-  font-size: 1.2rem;
-  margin-bottom: 16px;
-  font-weight: 600;
-}
-.field-row {
-  margin-bottom: 16px;
-}
-.field-label {
-  font-weight: 600;
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.8rem;
-}
+.compose-area h3 { font-size: 1.2rem; margin-bottom: 16px; font-weight: 600; }
+.field-row { margin-bottom: 16px; }
+.field-label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.8rem; }
 .field-input, .field-select, .field-textarea {
   width: 100%;
   padding: 12px 14px;
@@ -291,9 +170,21 @@ body {
   font-size: 0.9rem;
   background: white;
 }
-.field-textarea {
-  min-height: 180px;
-  font-family: monospace;
+.field-textarea { min-height: 180px; font-family: monospace; }
+.file-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.file-label {
+  background: #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 40px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
 }
 .compose-actions {
   display: flex;
@@ -311,13 +202,8 @@ body {
   font-size: 1rem;
   cursor: pointer;
 }
-.compose-status {
-  font-size: 0.8rem;
-  color: #2b6e3c;
-}
+.compose-status { font-size: 0.8rem; color: #2b6e3c; }
 .err { color: #b91c1c; }
-
-/* Dodatki */
 .back-link {
   display: inline-block;
   margin: 12px 16px 0 16px;
@@ -326,24 +212,10 @@ body {
   cursor: pointer;
   color: #0f2b3d;
 }
-.separator {
-  margin: 8px 16px;
-  border-top: 2px dashed #dce5ef;
-}
-.loading, .error-msg {
-  text-align: center;
-  padding: 40px;
-  color: #4b6e8a;
-}
+.separator { margin: 8px 16px; border-top: 2px dashed #dce5ef; }
+.loading, .error-msg { text-align: center; padding: 40px; color: #4b6e8a; }
 .error-msg { color: #b91c1c; }
-.tag {
-  background: #eef2f5;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-}
-
-/* dostosowanie dla małych ekranów */
+.tag { background: #eef2f5; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; }
 @media (max-width: 550px) {
   .token-area input { width: 140px; }
   .post-body { padding: 14px; }
@@ -357,7 +229,6 @@ body {
     <h1>📡 SERC · Forum</h1>
     <p>Matematyka · Eksperymenty · Filozofia · Synchronizacja</p>
   </div>
-
   <div class="toolbar">
     <div class="token-area">
       <label>🔐 GitHub token</label>
@@ -366,14 +237,8 @@ body {
     </div>
     <button class="snapshot-btn" id="snapshot-btn">📥 Pobierz zrzut forum</button>
   </div>
-
-  <!-- Tablice (boards) jako przyciski -->
   <div id="boards-container" class="boards-scroll"></div>
-
-  <!-- Lista wątków (dynamiczna) -->
   <div id="threads-container" class="threads-container"></div>
-
-  <!-- Główna treść (posty + formularz) -->
   <div class="main-content">
     <div id="breadcrumb" class="breadcrumb">SERC Forum</div>
     <div id="main-panel" style="padding-bottom: 20px;"></div>
@@ -381,19 +246,17 @@ body {
 </div>
 
 <script>
-// ---------- KONFIG ----------
+// ---------- KONFIGURACJA ----------
 const REPO_OWNER = 'czworun';
 const REPO_NAME  = 'Punkt-Zerowy';
 const DATA_BASE  = './data';
 const REPO_PATH  = 'forum/data';
 
-// Stan
 let boards = [];
 let threads = [];
 let sinceTs = null;
 let ghToken = sessionStorage.getItem('serc_gh_token') || '';
 let replyToId = null;
-let replyToAuthor = '';
 
 // ---------- POMOCNICZE ----------
 const tokenField = document.getElementById('token-field');
@@ -401,7 +264,6 @@ const tokenStatus = document.getElementById('token-status');
 tokenField.value = ghToken;
 tokenStatus.textContent = ghToken ? '✓ aktywny' : '⬤ brak';
 tokenStatus.style.color = ghToken ? '#2c5f2d' : '#9e2a2a';
-
 tokenField.addEventListener('change', () => {
   ghToken = tokenField.value.trim();
   sessionStorage.setItem('serc_gh_token', ghToken);
@@ -487,7 +349,7 @@ function renderThreads(currentBoardId, activeThreadId = null) {
   if (sinceTs) filtered = filtered.filter(t => new Date(t.last_post) >= sinceTs);
   filtered.sort((a,b) => new Date(b.last_post) - new Date(a.last_post));
   if (filtered.length === 0) {
-    container.innerHTML = '<div style="padding: 20px; text-align:center; color:#4b6e8a;">Brak wątków w tej tablicy.</div>';
+    container.innerHTML = '<div style="padding: 20px; text-align:center;">Brak wątków.</div>';
     return;
   }
   let html = '';
@@ -510,63 +372,7 @@ function renderThreads(currentBoardId, activeThreadId = null) {
   });
 }
 
-// ---------- RENDER POSTÓW + FORMULARZ ----------
-async function renderThreadView(threadId) {
-  const thread = threads.find(t => t.id === threadId);
-  if (!thread) throw new Error('Wątek nie znaleziony');
-  markSeen(threadId);
-  const board = boards.find(b => b.id === thread.board);
-  let posts = [];
-  try { posts = await fetchJSON(DATA_BASE + '/posts/' + threadId + '.json'); } catch(e) { posts = []; }
-  let postsHtml = '';
-  for (const p of posts) {
-    postsHtml += `<div class="post-card">
-      <div class="post-header">
-        <span class="post-author">${escapeHtml(p.author)}</span>
-        <span class="post-date">${fmtDate(p.timestamp)}</span>
-        ${p.signature ? `<span class="post-signature">— ${escapeHtml(p.signature)}</span>` : ''}
-      </div>
-      <div class="post-body" id="body-${p.id}">${renderMd(p.body)}</div>
-      <button class="reply-btn" onclick="setReply('${p.id}','${escapeHtml(p.author)}')">✍️ Odpowiedz</button>
-    </div>`;
-  }
-  const composeForm = getComposeForm(threadId, false);
-  document.getElementById('main-panel').innerHTML = `
-    <div class="back-link" onclick="location.hash='board=${thread.board}'">← wróć do listy wątków</div>
-    <div style="margin:0 16px 8px 16px;"><h2 style="font-size:1.3rem;">${escapeHtml(thread.title)}</h2></div>
-    ${postsHtml}
-    <hr class="separator">
-    ${composeForm}
-  `;
-  typeset();
-  document.getElementById('breadcrumb').innerHTML = `<a onclick="location.hash='board=${thread.board}'">${board ? board.name : thread.board}</a> / <span>${escapeHtml(thread.title)}</span>`;
-}
-
-function renderBoardView(boardId) {
-  const board = boards.find(b => b.id === boardId);
-  if (!board) { document.getElementById('main-panel').innerHTML = '<div class="error-msg">Tablica nie istnieje</div>'; return; }
-  document.getElementById('breadcrumb').innerHTML = `<span>${board.name}</span>`;
-  document.getElementById('main-panel').innerHTML = `
-    <div style="padding: 16px 20px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
-        <h2 style="font-size:1.5rem;">${board.icon} ${board.name}</h2>
-        <button class="submit-btn" style="background:#0f2b3d; padding:8px 20px;" onclick="location.hash='new=${boardId}'">➕ Nowy wątek</button>
-      </div>
-      <p>${board.description || ''}</p>
-    </div>
-  `;
-  renderThreads(boardId, null);
-}
-
-function renderNewThread(boardId) {
-  const board = boards.find(b => b.id === boardId);
-  document.getElementById('breadcrumb').innerHTML = `<a onclick="location.hash='board=${boardId}'">${board ? board.name : boardId}</a> / <span>nowy wątek</span>`;
-  document.getElementById('main-panel').innerHTML = `
-    <div class="back-link" onclick="location.hash='board=${boardId}'">← wróć</div>
-    ${getComposeForm(boardId, true)}
-  `;
-}
-
+// ---------- FORMULARZ Z UPLOADEM .MD ----------
 function getComposeForm(contextId, isNew) {
   return `<div class="compose-area" id="compose">
     <h3>${isNew ? '✨ Nowy wątek' : '💬 Twoja odpowiedź'}</h3>
@@ -582,8 +388,13 @@ function getComposeForm(contextId, isNew) {
     </select></div>
     <div class="field-row"><label class="field-label">Podpis (opcjonalny)</label><input class="field-input" id="f-sig" placeholder="— Twój podpis"></div>
     ${isNew ? `<div class="field-row"><label class="field-label">Tagi (przecinki)</label><input class="field-input" id="f-tags" placeholder="matematyka, NB13, …"></div>` : ''}
+    <div class="file-upload-row">
+      <label class="file-label">📂 Wczytaj plik .md (z frontmatterem)</label>
+      <input type="file" id="md-file-upload" accept=".md,.txt" style="display:none">
+      <span id="file-name-display" style="font-size:0.75rem;"></span>
+    </div>
     <div class="field-row"><label class="field-label">Treść (markdown)</label>
-      <textarea class="field-textarea" id="f-body" rows="8" placeholder="Możesz użyć **pogrubienia**, $latex$, i załączników"></textarea>
+      <textarea class="field-textarea" id="f-body" rows="8" placeholder="**pogrubienie**, $latex$, …"></textarea>
     </div>
     <div id="f-reply-info" class="field-label" style="margin-top:-8px;"></div>
     <div class="compose-actions">
@@ -591,6 +402,62 @@ function getComposeForm(contextId, isNew) {
       <span class="compose-status" id="f-status"></span>
     </div>
   </div>`;
+}
+
+// Obsługa wczytywania pliku .md (z frontmatterem)
+function setupFileUpload() {
+  const fileInput = document.getElementById('md-file-upload');
+  if (!fileInput) return;
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    let meta = {};
+    let body = text;
+    if (text.startsWith('---')) {
+      const end = text.indexOf('\n---', 3);
+      if (end !== -1) {
+        const yaml = text.slice(3, end).trim();
+        body = text.slice(end + 4).trim();
+        yaml.split('\n').forEach(line => {
+          const m = line.match(/^(\w+):\s*(.+)$/);
+          if (m) meta[m[1].toLowerCase()] = m[2].trim();
+        });
+      }
+    }
+    if (meta.title) {
+      const titleField = document.getElementById('f-title');
+      if (titleField) titleField.value = meta.title;
+    }
+    if (meta.author) {
+      const authorField = document.getElementById('f-author');
+      if (authorField) authorField.value = meta.author;
+    }
+    if (meta.signature || meta.sig) {
+      const sigField = document.getElementById('f-sig');
+      if (sigField) sigField.value = meta.signature || meta.sig;
+    }
+    if (meta.type) {
+      const typeSelect = document.getElementById('f-type');
+      if (typeSelect) {
+        const opt = [...typeSelect.options].find(o => o.value === meta.type);
+        if (opt) typeSelect.value = meta.type;
+      }
+    }
+    if (meta.tags) {
+      const tagsField = document.getElementById('f-tags');
+      if (tagsField) tagsField.value = meta.tags;
+    }
+    const bodyField = document.getElementById('f-body');
+    if (bodyField) bodyField.value = body;
+    const displaySpan = document.getElementById('file-name-display');
+    if (displaySpan) displaySpan.textContent = `✓ ${file.name}`;
+    setTimeout(() => { if(displaySpan) displaySpan.textContent = ''; }, 3000);
+  });
+  const fakeLabel = document.querySelector('.file-label');
+  if (fakeLabel) {
+    fakeLabel.addEventListener('click', () => { fileInput.click(); });
+  }
 }
 
 async function submitPost(contextId, isNewThread) {
@@ -602,12 +469,12 @@ async function submitPost(contextId, isNewThread) {
   const body = document.getElementById('f-body').value.trim();
   const title = isNewThread ? document.getElementById('f-title').value.trim() : null;
   const tagsRaw = isNewThread ? document.getElementById('f-tags').value.trim() : '';
-  if (!author || !body) { statusSpan.textContent = 'Autor i treść są wymagane.'; statusSpan.className = 'compose-status err'; return; }
-  if (isNewThread && !title) { statusSpan.textContent = 'Tytuł jest wymagany.'; return; }
-  if (!ghToken) { statusSpan.textContent = 'Brak tokenu GitHub – nie można zapisać.'; return; }
+  if (!author || !body) { statusSpan.textContent = 'Autor i treść są wymagane.'; statusSpan.classList.add('err'); return; }
+  if (isNewThread && !title) { statusSpan.textContent = 'Tytuł jest wymagany.'; statusSpan.classList.add('err'); return; }
+  if (!ghToken) { statusSpan.textContent = 'Brak tokenu GitHub – nie można zapisać.'; statusSpan.classList.add('err'); return; }
   btn.disabled = true;
   statusSpan.textContent = 'Publikowanie…';
-  statusSpan.className = 'compose-status';
+  statusSpan.classList.remove('err');
   try {
     const now = new Date().toISOString();
     if (isNewThread) {
@@ -638,18 +505,130 @@ async function submitPost(contextId, isNewThread) {
     }
   } catch(e) {
     statusSpan.textContent = 'Błąd: ' + e.message;
-    statusSpan.className = 'compose-status err';
+    statusSpan.classList.add('err');
     btn.disabled = false;
   }
 }
 
 function setReply(postId, author) {
   replyToId = postId;
-  replyToAuthor = author;
   const info = document.getElementById('f-reply-info');
   if (info) info.textContent = `↳ Odpowiedź na: ${author} (${postId})`;
   document.getElementById('compose').scrollIntoView({ behavior: 'smooth' });
   document.getElementById('f-body').focus();
+}
+
+// ---------- RENDER WIDOKU WĄTKU ----------
+async function renderThreadView(threadId) {
+  const thread = threads.find(t => t.id === threadId);
+  if (!thread) throw new Error('Wątek nie znaleziony');
+  markSeen(threadId);
+  const board = boards.find(b => b.id === thread.board);
+  let posts = [];
+  try { posts = await fetchJSON(DATA_BASE + '/posts/' + threadId + '.json'); } catch(e) { posts = []; }
+  let postsHtml = '';
+  for (const p of posts) {
+    postsHtml += `<div class="post-card">
+      <div class="post-header">
+        <span class="post-author">${escapeHtml(p.author)}</span>
+        <span class="post-date">${fmtDate(p.timestamp)}</span>
+        ${p.signature ? `<span class="post-signature">— ${escapeHtml(p.signature)}</span>` : ''}
+      </div>
+      <div class="post-body">${renderMd(p.body)}</div>
+      <button class="reply-btn" onclick="setReply('${p.id}','${escapeHtml(p.author)}')">✍️ Odpowiedz</button>
+    </div>`;
+  }
+  const composeForm = getComposeForm(threadId, false);
+  document.getElementById('main-panel').innerHTML = `
+    <div class="back-link" onclick="location.hash='board=${thread.board}'">← wróć do listy wątków</div>
+    <div style="margin:0 16px 8px 16px;"><h2 style="font-size:1.3rem;">${escapeHtml(thread.title)}</h2></div>
+    ${postsHtml}
+    <hr class="separator">
+    ${composeForm}
+  `;
+  typeset();
+  setupFileUpload(); // aktywuj upload w nowym formularzu
+  const submitBtn = document.getElementById('f-submit');
+  if (submitBtn) submitBtn.onclick = () => submitPost(threadId, false);
+  document.getElementById('breadcrumb').innerHTML = `<a onclick="location.hash='board=${thread.board}'">${board ? board.name : thread.board}</a> / <span>${escapeHtml(thread.title)}</span>`;
+}
+
+function renderBoardView(boardId) {
+  const board = boards.find(b => b.id === boardId);
+  if (!board) { document.getElementById('main-panel').innerHTML = '<div class="error-msg">Tablica nie istnieje</div>'; return; }
+  document.getElementById('breadcrumb').innerHTML = `<span>${board.name}</span>`;
+  document.getElementById('main-panel').innerHTML = `
+    <div style="padding: 16px 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+        <h2 style="font-size:1.5rem;">${board.icon} ${board.name}</h2>
+        <button class="submit-btn" style="background:#0f2b3d; padding:8px 20px;" onclick="location.hash='new=${boardId}'">➕ Nowy wątek</button>
+      </div>
+      <p>${board.description || ''}</p>
+    </div>
+  `;
+  renderThreads(boardId, null);
+}
+
+function renderNewThread(boardId) {
+  const board = boards.find(b => b.id === boardId);
+  document.getElementById('breadcrumb').innerHTML = `<a onclick="location.hash='board=${boardId}'">${board ? board.name : boardId}</a> / <span>nowy wątek</span>`;
+  document.getElementById('main-panel').innerHTML = `
+    <div class="back-link" onclick="location.hash='board=${boardId}'">← wróć</div>
+    ${getComposeForm(boardId, true)}
+  `;
+  setupFileUpload();
+  const submitBtn = document.getElementById('f-submit');
+  if (submitBtn) submitBtn.onclick = () => submitPost(boardId, true);
+}
+
+// ---------- SNAPSHOT (generowanie zrzutu) ----------
+async function generateSnapshot() {
+  const btn = document.getElementById('snapshot-btn');
+  const originalText = btn.textContent;
+  btn.textContent = '… pobieranie';
+  btn.disabled = true;
+  try {
+    if (!boards.length) boards = await fetchJSON(DATA_BASE + '/boards.json');
+    if (!threads.length) threads = await fetchJSON(DATA_BASE + '/threads.json');
+    const now = new Date();
+    const ts = now.toISOString();
+    let md = `---\nsnapshot: ${ts}\nthreads: ${threads.length}\ngenerowany_przez: serc.pl/forum\n---\n\n`;
+    md += `# SERC Forum — zrzut dla modeli AI\n**Data:** ${ts.replace('T',' ').slice(0,16)} UTC\n**Wątków:** ${threads.length}\n\n---\n\n`;
+    const boardOrder = boards.map(b => b.id);
+    const sorted = [...threads].sort((a,b) => {
+      const ai = boardOrder.indexOf(a.board), bi = boardOrder.indexOf(b.board);
+      if (ai !== bi) return ai - bi;
+      return new Date(b.last_post) - new Date(a.last_post);
+    });
+    for (const t of sorted) {
+      const board = boards.find(b => b.id === t.board);
+      md += `## [${board ? board.name : t.board}] ${t.title}\n`;
+      md += `**id:** ${t.id} · **autor:** ${t.author} · **ostatni post:** ${fmtDate(t.last_post)} · **postów:** ${t.post_count}\n`;
+      if (t.tags && t.tags.length) md += `**tagi:** ${t.tags.join(', ')}\n`;
+      md += `\n`;
+      try {
+        const posts = await fetchJSON(DATA_BASE + '/posts/' + t.id + '.json');
+        for (const p of posts) {
+          md += `### ${p.author}${p.signature ? ` — *${p.signature}*` : ''}\n`;
+          md += `*${fmtDate(p.timestamp)}*${p.in_reply_to ? ` · w odpowiedzi na: ${p.in_reply_to}` : ''}\n\n`;
+          md += p.body + `\n\n---\n\n`;
+        }
+      } catch(e) { md += `*(brak postów lub błąd pobierania)*\n\n---\n\n`; }
+    }
+    const filename = `serc_forum_${ts.slice(0,16).replace(/[T:]/g,'-')}.md`;
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    btn.textContent = '✓ pobrano';
+    setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2000);
+  } catch(e) {
+    btn.textContent = '✗ błąd';
+    console.error(e);
+    setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2000);
+  }
 }
 
 // ---------- ROUTING ----------
@@ -686,15 +665,10 @@ async function render() {
 
 function escapeHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// nasłuchiwanie zmian hash
 window.addEventListener('hashchange', render);
 document.getElementById('snapshot-btn').addEventListener('click', generateSnapshot);
-window.submitPost = submitPost;
 window.setReply = setReply;
 
-async function generateSnapshot() { /* zachowujemy oryginalną funkcję (długa – pomijam dla czytelności, ale można wkleić z poprzedniej wersji) */ }
-
-// start
 render();
 </script>
 </body>
