@@ -849,11 +849,13 @@ function composeForm(contextId, isNew) {
       </div>
       <div class="file-row">
         <span class="file-label">Treść</span>
-        <label class="file-btn">wczytaj .md
+        <label class="file-btn">📎 wczytaj .md
           <input type="file" accept=".md,.txt" id="f-file-upload" style="display:none" onchange="loadMdFile(this)">
         </label>
+        <button class="file-btn" onclick="parsePaste()" type="button">⬆ parsuj wklejone</button>
         <span class="file-name" id="f-file-name"></span>
       </div>
+      <textarea class="field-textarea" id="f-paste" placeholder="Wklej tu zawartość .md z frontmatterem --- i kliknij ⬆ parsuj wklejone…" style="min-height:70px;margin-bottom:6px;background:#fffbeb;border-color:#d1d5db"></textarea>
       <textarea class="field-textarea" id="f-body" placeholder="Treść w Markdown. Wzory: $x = P_0$ lub $$G = 4I - J$$"></textarea>
       <div id="f-reply-info" style="font-size:0.72rem;color:var(--text3)"></div>
     </div>
@@ -866,36 +868,49 @@ function composeForm(contextId, isNew) {
   </div>`;
 }
 
+// ── PARSE PASTED MD ───────────────────────────────────────────────────
+function parsePaste() {
+  const paste = document.getElementById('f-paste');
+  if (!paste || !paste.value.trim()) return;
+  applyMdText(paste.value.trim());
+  document.getElementById('f-file-name').textContent = '✓ wklejono';
+  paste.value = '';
+}
+
+function applyMdText(raw) {
+  let text = raw;
+  let meta = {};
+  if (text.startsWith('---')) {
+    const end = text.indexOf('\n---', 3);
+    if (end !== -1) {
+      const yaml = text.slice(3, end).trim();
+      text = text.slice(end + 4).trim();
+      yaml.split('\n').forEach(line => {
+        const m = line.match(/^([^:]+):\s*(.+)$/);
+        if (m) meta[m[1].trim()] = m[2].trim();
+      });
+    }
+  }
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  set('f-title',  meta.title);
+  set('f-author', meta.author);
+  set('f-sig',    meta.signature || meta.sig);
+  set('f-tags',   meta.tags);
+  if (meta.type) {
+    const sel = document.getElementById('f-type');
+    if (sel) { const opt = [...sel.options].find(o => o.value === meta.type); if (opt) sel.value = meta.type; }
+  }
+  const ta = document.getElementById('f-body');
+  if (ta) ta.value = text;
+}
+
 // ── FILE UPLOAD + FRONTMATTER ─────────────────────────────────────────
 function loadMdFile(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    let text = e.target.result;
-    let meta = {};
-    if (text.startsWith('---')) {
-      const end = text.indexOf('\n---', 3);
-      if (end !== -1) {
-        const yaml = text.slice(3, end).trim();
-        text = text.slice(end + 4).trim();
-        yaml.split('\n').forEach(line => {
-          const m = line.match(/^(\w+):\s*(.+)$/);
-          if (m) meta[m[1].trim()] = m[2].trim();
-        });
-      }
-    }
-    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-    set('f-title',  meta.title);
-    set('f-author', meta.author);
-    set('f-sig',    meta.signature || meta.sig);
-    set('f-tags',   meta.tags);
-    if (meta.type) {
-      const sel = document.getElementById('f-type');
-      if (sel) { const opt = [...sel.options].find(o => o.value === meta.type); if (opt) sel.value = meta.type; }
-    }
-    const ta = document.getElementById('f-body');
-    if (ta) ta.value = text;
+    applyMdText(e.target.result);
     document.getElementById('f-file-name').textContent = '✓ ' + file.name;
   };
   reader.readAsText(file, 'UTF-8');
