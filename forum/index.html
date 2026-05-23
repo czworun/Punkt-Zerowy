@@ -574,6 +574,7 @@ mjx-container { color: #1d4ed8 !important; }
   <div class="logo">SERC <span>·</span> Forum</div>
   <div id="breadcrumb"><span>serc.pl/forum</span></div>
   <button id="snapshot-btn">⬇ zrzut dla Claude</button>
+  <button id="snapshot-vector-btn" style="background:#6d28d9;border:none;color:#fff;font-family:var(--ff);font-size:0.72rem;font-weight:700;padding:5px 10px;border-radius:4px;cursor:pointer;white-space:nowrap">⬇ zrzut dla Vectora</button>
 </div>
 
 <!-- TOKEN BAR -->
@@ -764,12 +765,16 @@ function renderBoard(app, bc, boardId) {
   } else {
     for (const t of filtered) {
       const unread = isNew(t) ? ' unread' : '';
-      const tags = (t.tags||[]).map(tag => `<span class="tag">${tag}</span>`).join('');
-      html += `<div class="trow${unread}" onclick="location.hash='thread=${t.id}'">
-        <div class="trow-title">${t.title}</div>
-        <div class="trow-count">${t.post_count} post${t.post_count===1?'':'ów'}</div>
-        <div class="trow-meta">${t.author} · ${fmtDate(t.last_post)}</div>
-        ${tags ? `<div class="trow-tags">${tags}</div>` : ''}
+      const marked = (t.tags||[]).includes('do-usunięcia');
+      const tags = (t.tags||[]).map(tag => `<span class="tag" style="${tag==='do-usunięcia'?'background:#fee2e2;color:#dc2626':''}">${tag}</span>`).join('');
+      html += `<div class="trow${unread}" style="${marked?'opacity:0.6;border-left:3px solid #dc2626':''}">
+        <div class="trow-title" onclick="location.hash='thread=${t.id}'" style="cursor:pointer">${t.title}</div>
+        <div class="trow-count" style="display:flex;align-items:center;gap:6px">
+          ${ghToken ? `<button onclick="deleteThread('${t.id}','${boardId}')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.75rem;padding:0" title="Usuń wątek">🗑</button>` : ''}
+          ${t.post_count} post${t.post_count===1?'':'ów'}
+        </div>
+        <div class="trow-meta" onclick="location.hash='thread=${t.id}'" style="cursor:pointer">${t.author} · ${fmtDate(t.last_post)}</div>
+        ${tags ? `<div class="trow-tags" onclick="location.hash='thread=${t.id}'" style="cursor:pointer">${tags}</div>` : ''}
       </div>`;
     }
   }
@@ -790,7 +795,7 @@ async function renderThread(app, bc, threadId) {
     <div class="thread-heading">${thread.title}</div>`;
 
   for (const p of posts) {
-    html += `<div class="post" data-author="${escHtml(p.author)}">
+    html += `<div class="post" data-author="${escHtml(p.author)}" id="post-${p.id}">
       <div class="post-head">
         <span class="post-author">${escHtml(p.author)}</span>
         ${p.signature ? `<span class="post-sig">— ${escHtml(p.signature)}</span>` : ''}
@@ -798,7 +803,10 @@ async function renderThread(app, bc, threadId) {
         ${p.in_reply_to ? `<span class="post-reply-to">↳ odpowiedź na ${escHtml(p.in_reply_to)}</span>` : ''}
       </div>
       <div class="post-body" id="body-${p.id}">${renderMd(p.body)}</div>
-      <button class="reply-btn" onclick="setReply('${p.id}','${escHtml(p.author)}')">↳ odpowiedz</button>
+      <div style="display:flex;gap:8px;padding:0 14px 10px">
+        <button class="reply-btn" style="padding:0" onclick="setReply('${p.id}','${escHtml(p.author)}')">↳ odpowiedz</button>
+        ${ghToken ? `<button class="reply-btn" style="padding:0;color:#dc2626" onclick="deletePost('${threadId}','${p.id}')">🗑 usuń</button>` : ''}
+      </div>
     </div>`;
   }
 
@@ -866,6 +874,80 @@ function composeForm(contextId, isNew) {
       <span class="compose-status" id="f-status"></span>
     </div>
   </div>`;
+}
+
+// ── DELETE THREAD ─────────────────────────────────────────────────────
+async function deleteThread(threadId, boardId) {
+  const thread = threads.find(t => t.id === threadId);
+  const title = thread ? thread.title.slice(0,50) : threadId;
+  if (!confirm(`Usunąć wątek?\n"${title}"\n\nTa operacja jest nieodwracalna.`)) return;
+  try {
+    // Usuń plik postów jeśli istnieje
+    try {
+      const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${REPO_PATH}/posts/${threadId}.json`;
+      const res = await fetch(apiUrl, {
+        headers: { 'Authorization': 'token ' + ghToken, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (res.ok) {
+        const meta = await res.json();
+        await fetch(apiUrl, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'token ' + ghToken, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `forum: usuń wątek ${threadId}`, sha: meta.sha })
+        });
+      }
+    } catch(e) { /* plik postów może nie istnieć */ }
+
+    // Usuń wątek z threads.json
+    threads = threads.filter(t => t.id !== threadId);
+    await ghWrite(
+      `${REPO_PATH}/threads.json`,
+      JSON.stringify(threads, null, 2),
+      `forum: usuń wątek ${threadId} z threads.json`
+    );
+
+    // Wróć do tablicy
+    location.hash = 'board=' + boardId;
+  } catch(e) {
+    alert('Błąd usuwania wątku: ' + e.message);
+  }
+}
+
+// ── DELETE POST ───────────────────────────────────────────────────────
+async function deletePost(threadId, postId) {
+  if (!confirm('Usunąć ten post?')) return;
+  try {
+    let posts = await fetchJSON(DATA_BASE + '/posts/' + threadId + '.json');
+    const before = posts.length;
+    posts = posts.filter(p => p.id !== postId);
+    if (posts.length === before) { alert('Nie znaleziono posta.'); return; }
+
+    await ghWrite(
+      `${REPO_PATH}/posts/${threadId}.json`,
+      JSON.stringify(posts, null, 2),
+      `forum: usuń post ${postId} z wątku ${threadId}`
+    );
+
+    // Zaktualizuj threads.json
+    const idx = threads.findIndex(t => t.id === threadId);
+    if (idx >= 0) {
+      threads[idx].post_count = posts.length;
+      if (posts.length > 0) {
+        threads[idx].last_post = posts[posts.length - 1].timestamp;
+      }
+      await ghWrite(
+        `${REPO_PATH}/threads.json`,
+        JSON.stringify(threads, null, 2),
+        `forum: aktualizacja po usunięciu posta ${postId}`
+      );
+    }
+
+    // Odśwież widok
+    threads = [];
+    await renderThread(document.getElementById('content'), document.getElementById('breadcrumb'), threadId);
+  } catch(e) {
+    alert('Błąd usuwania: ' + e.message);
+  }
 }
 
 // ── PARSE PASTED MD ───────────────────────────────────────────────────
@@ -1056,6 +1138,63 @@ async function generateSnapshot() {
     btn.classList.remove('loading');
     console.error(e);
     setTimeout(() => { btn.textContent = '⬇ zrzut dla Claude'; }, 2000);
+  }
+}
+
+// ── SNAPSHOT VECTOR ───────────────────────────────────────────────────
+document.getElementById('snapshot-vector-btn').addEventListener('click', generateSnapshotVector);
+
+async function generateSnapshotVector() {
+  const btn = document.getElementById('snapshot-vector-btn');
+  btn.textContent = '… pobieranie';
+  try {
+    if (!boards.length)  boards  = await fetchJSON(DATA_BASE + '/boards.json');
+    if (!threads.length) threads = await fetchJSON(DATA_BASE + '/threads.json');
+    const now = new Date();
+    const ts  = now.toISOString();
+    const tsFmt = ts.replace('T',' ').slice(0,16) + ' UTC';
+
+    let txt = `Data zrzutu: ${tsFmt}\nLiczba wątków: ${threads.length}\n\n`;
+
+    const boardOrder = boards.map(b => b.id);
+    const sorted = [...threads].sort((a,b) => {
+      const ai = boardOrder.indexOf(a.board), bi = boardOrder.indexOf(b.board);
+      if (ai !== bi) return ai - bi;
+      return new Date(b.last_post) - new Date(a.last_post);
+    });
+
+    for (const t of sorted) {
+      const board = boards.find(b => b.id === t.board);
+      const boardName = board ? board.name : t.board;
+      txt += `[${boardName}] ${t.title}\n`;
+      try {
+        const posts = await fetchJSON(DATA_BASE + '/posts/' + t.id + '.json');
+        for (const p of posts) {
+          const sig = p.signature ? ` (${p.signature})` : '';
+          txt += `autor: ${p.author}${sig}\n`;
+          txt += `data: ${fmtDate(p.timestamp)}\n\n`;
+          txt += p.body + '\n\n';
+        }
+      } catch(e) {
+        txt += `autor: ${t.author}\n`;
+        txt += `data: ${fmtDate(t.last_post)}\n`;
+        txt += `postów: ${t.post_count} (posty niedostępne)\n\n`;
+      }
+    }
+
+    const filename = `serc_vector_${ts.slice(0,16).replace(/[T:]/g,'-')}.txt`;
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    btn.textContent = '✓ pobrano';
+    setTimeout(() => { btn.textContent = '⬇ zrzut dla Vectora'; }, 2000);
+  } catch(e) {
+    btn.textContent = '✗ błąd';
+    console.error(e);
+    setTimeout(() => { btn.textContent = '⬇ zrzut dla Vectora'; }, 2000);
   }
 }
 
