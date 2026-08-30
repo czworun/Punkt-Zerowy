@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Stabilna budowa czworościanów</title>
+    <title>Stabilna budowa czworościanów – z zapobieganiem kolizjom</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; touch-action: none; }
         #info {
@@ -78,10 +78,11 @@
 
         // --- Parametry ---
         const L0 = 2.0;
+        const MIN_DIST = 0.7 * L0;   // minimalna odległość nowego wierzchołka od istniejących
         let autoRelax = true;
         let meshData = createInitialMesh();
         let lastRelaxTime = 0;
-        const RELAX_INTERVAL = 40; // 25 Hz
+        const RELAX_INTERVAL = 40; // 25 Hz (nie używane w tej wersji, globalna relaksacja wywoływana ręcznie)
 
         // --- Three.js setup ---
         const scene = new THREE.Scene();
@@ -132,6 +133,18 @@
             return [[a,b,c], [a,b,d], [a,c,d], [b,c,d]];
         }
 
+        // Funkcja sprawdza, czy nowa pozycja nie koliduje z istniejącymi wierzchołkami
+        function isPositionFree(newPos, verts, excludeIndices) {
+            for (let i = 0; i < verts.length; i++) {
+                if (!verts[i].active) continue;
+                if (excludeIndices.includes(i)) continue;
+                if (verts[i].pos.distanceTo(newPos) < MIN_DIST) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         function addTetraOnFace(tetraIdx, faceIdx, verts, tetras) {
             const tetra = tetras[tetraIdx];
             const face = getAllFaces(tetra)[faceIdx];
@@ -143,9 +156,16 @@
             const dirToOpp = new THREE.Vector3().subVectors(verts[vOpp].pos, center).normalize();
             const height = L0 * Math.sqrt(2/3);
             const newPos = center.clone().sub(dirToOpp.multiplyScalar(height));
+            
+            // Sprawdź kolizję – jeśli nowy wierzchołek zbyt blisko, nie dodawaj
+            if (!isPositionFree(newPos, verts, [v0, v1, v2])) {
+                return false; // sygnał niepowodzenia
+            }
+            
             const newIdx = verts.length;
             verts.push({ pos: newPos, fixed: false, active: true });
             tetras.push([v0, v1, v2, newIdx]);
+            return true;
         }
 
         function removeTetra(tetraIdx, verts, tetras) {
@@ -229,14 +249,12 @@
 
         // --- Energia odpychająca (zapobiega przenikaniu) ---
         function repulsionEnergy(verts, tetras) {
-            const minDist = 0.8 * L0; // minimalna dozwolona odległość
+            const minDist = MIN_DIST; // 0.7 * L0
             let E = 0;
-            // Zbierz aktywne wierzchołki
             const activeVerts = [];
             for (let i = 0; i < verts.length; i++) {
                 if (verts[i].active) activeVerts.push(i);
             }
-            // Zestaw krawędzi, aby nie karać połączonych
             const edgeSet = new Set();
             for (const tetra of tetras) {
                 const combos = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
@@ -250,14 +268,14 @@
                 for (let j = i+1; j < activeVerts.length; j++) {
                     const a = activeVerts[i], b = activeVerts[j];
                     const key = a < b ? `${a}_${b}` : `${b}_${a}`;
-                    if (edgeSet.has(key)) continue; // pomiń połączone krawędzią
+                    if (edgeSet.has(key)) continue;
                     const dist = verts[a].pos.distanceTo(verts[b].pos);
                     if (dist < minDist) {
                         E += (minDist - dist) ** 2;
                     }
                 }
             }
-            return E * 100; // waga
+            return E * 300; // zwiększona waga
         }
 
         function computeEnergy(verts, tetras, includeAngle = true) {
@@ -269,27 +287,20 @@
             return E;
         }
 
-        // --- Lokalna relaksacja: tylko wierzchołki w otoczeniu nowego czworościanu ---
-        function relaxLocal(verts, tetras, centerTetraIdx, iterations = 50, step = 0.001) {
-            // Znajdź wierzchołki należące do czworościanu i jego bezpośrednich sąsiadów (wspólna krawędź lub ściana)
+        // --- Lokalna relaksacja (po dodaniu) ---
+        function relaxLocal(verts, tetras, centerTetraIdx, iterations = 30, step = 0.001) {
             const affected = new Set();
             const centerTetra = tetras[centerTetraIdx];
             centerTetra.forEach(v => affected.add(v));
-            
-            // Dodaj wierzchołki z sąsiednich czworościanów (mających wspólną ścianę lub krawędź z centerTetra)
             for (let i = 0; i < tetras.length; i++) {
                 if (i === centerTetraIdx) continue;
                 const other = tetras[i];
-                // Sprawdź, czy mają wspólny wierzchołek
-                const share = other.some(v => centerTetra.includes(v));
-                if (share) {
+                if (other.some(v => centerTetra.includes(v))) {
                     other.forEach(v => affected.add(v));
                 }
             }
-            
             const freeIndices = Array.from(affected).filter(vi => !verts[vi].fixed && verts[vi].active);
             if (freeIndices.length === 0) return;
-            
             const eps = 1e-5;
             for (let it = 0; it < iterations; it++) {
                 const gradient = freeIndices.map(() => new THREE.Vector3());
@@ -311,8 +322,8 @@
             }
         }
 
-        // --- Globalna relaksacja (rzadziej używana) ---
-        function relaxGlobal(iterations = 20, step = 0.0002) {
+        // --- Globalna relaksacja (łagodna, używana po operacjach) ---
+        function relaxGlobal(iterations = 15, step = 0.0001) {
             const freeIndices = meshData.verts.map((v, i) => (v.fixed || v.active === false) ? -1 : i).filter(i => i >= 0);
             if (freeIndices.length === 0) return;
             const eps = 1e-5;
@@ -405,9 +416,10 @@
             if (dist < TAP_MAX_DIST && dt < 500) {
                 const hit = getTetraAndFaceAtPointer(e.clientX, e.clientY);
                 if (hit) {
-                    addTetraOnFace(hit.tetraIndex, hit.faceIndex, meshData.verts, meshData.tetras);
-                    if (autoRelax) {
+                    const success = addTetraOnFace(hit.tetraIndex, hit.faceIndex, meshData.verts, meshData.tetras);
+                    if (success && autoRelax) {
                         relaxLocal(meshData.verts, meshData.tetras, meshData.tetras.length - 1, 30, 0.001);
+                        relaxGlobal(10, 0.0001);
                     }
                     rebuildMesh();
                 }
@@ -415,6 +427,9 @@
                 const hit = getTetraAndFaceAtPointer(e.clientX, e.clientY);
                 if (hit) {
                     removeTetra(hit.tetraIndex, meshData.verts, meshData.tetras);
+                    if (autoRelax) {
+                        relaxGlobal(10, 0.0001);
+                    }
                     rebuildMesh();
                 }
             }
@@ -433,7 +448,7 @@
         window.closeRing = () => { if (autoRelax) { relaxGlobal(50, 0.0005); rebuildMesh(); } };
         window.createRing5 = (closed) => { meshData = createRing5(closed); rebuildMesh(); };
 
-        // --- Ciągła pętla animacji (tylko renderowanie) ---
+        // --- Pętla animacji (tylko renderowanie) ---
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
