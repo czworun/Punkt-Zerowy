@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Interaktywne czworościany – ciągła relaksacja 25 Hz</title>
+    <title>Interaktywne czworościany – energia wierzchołkowa</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; touch-action: none; }
         #info {
@@ -78,19 +78,17 @@
 
         // --- Parametry ---
         const L0 = 2.0;
-        let autoRelax = true;          // globalne przełączanie relaksacji
+        let autoRelax = true;
         let meshData = createInitialMesh();
-        let lastRelaxTime = 0;         // czas ostatniej relaksacji w ms
-        const RELAX_INTERVAL = 40;     // 25 Hz = 40 ms
+        let lastRelaxTime = 0;
+        const RELAX_INTERVAL = 40; // 25 Hz
 
-        // --- Inicjalizacja Three.js ---
+        // --- Three.js setup ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x222222);
-
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(5, 5, 5);
         camera.lookAt(0, 0, 0);
-
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -103,7 +101,6 @@
         controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
         controls.update();
 
-        // Oświetlenie
         const ambientLight = new THREE.AmbientLight(0x404040);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -115,7 +112,6 @@
 
         const meshGroup = new THREE.Group();
         scene.add(meshGroup);
-
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
@@ -133,12 +129,7 @@
 
         function getAllFaces(tetra) {
             const [a,b,c,d] = tetra;
-            return [
-                [a,b,c],
-                [a,b,d],
-                [a,c,d],
-                [b,c,d]
-            ];
+            return [[a,b,c], [a,b,d], [a,c,d], [b,c,d]];
         }
 
         function addTetraOnFace(tetraIdx, faceIdx, verts, tetras) {
@@ -216,7 +207,7 @@
                 if (count < 5) continue;
                 const [a, b] = key.split('_').map(Number);
                 const adjacent = tetras.filter(t => t.includes(a) && t.includes(b));
-                if (adjacent.length < 5) continue;  // teraz obsługuje też >5
+                if (adjacent.length < 5) continue;
                 const axis = new THREE.Vector3().subVectors(verts[b].pos, verts[a].pos).normalize();
                 const angles = [];
                 for (const tetra of adjacent) {
@@ -228,7 +219,7 @@
                     if (vc_perp.length() < 1e-10 || vd_perp.length() < 1e-10) continue;
                     angles.push(vc_perp.angleTo(vd_perp));
                 }
-                if (angles.length >= 5) {  // wystarczy >=5
+                if (angles.length >= 5) {
                     const sum = angles.reduce((acc, x) => acc + x, 0);
                     angleE += (sum - 2 * Math.PI) ** 2;
                 }
@@ -236,14 +227,50 @@
             return angleE * 200;
         }
 
+        // --- NOWA ENERGIA WIERZCHOŁKOWA (kąty bryłowe) ---
+        function vertexAngleEnergy(verts, tetras) {
+            let E = 0;
+            // Dla każdego aktywnego wierzchołka zbierz czworościany, które go zawierają
+            for (let vi = 0; vi < verts.length; vi++) {
+                if (!verts[vi].active) continue;
+                const adjacentTetras = tetras.filter(t => t.includes(vi));
+                if (adjacentTetras.length === 0) continue;
+                let totalSolidAngle = 0;
+                for (const tetra of adjacentTetras) {
+                    // Pobierz pozostałe trzy wierzchołki czworościanu
+                    const others = tetra.filter(v => v !== vi);
+                    if (others.length !== 3) continue;
+                    const p = verts[vi].pos;
+                    const p1 = verts[others[0]].pos;
+                    const p2 = verts[others[1]].pos;
+                    const p3 = verts[others[2]].pos;
+                    // Wektory jednostkowe z wierzchołka vi
+                    const v1 = new THREE.Vector3().subVectors(p1, p).normalize();
+                    const v2 = new THREE.Vector3().subVectors(p2, p).normalize();
+                    const v3 = new THREE.Vector3().subVectors(p3, p).normalize();
+                    // Kąt bryłowy trójkąta sferycznego (wzór z arctan)
+                    const det = v1.dot(new THREE.Vector3().crossVectors(v2, v3));
+                    const denom = 1 + v1.dot(v2) + v2.dot(v3) + v3.dot(v1);
+                    const omega = 2 * Math.atan2(Math.abs(det), denom);
+                    totalSolidAngle += omega;
+                }
+                // Idealna suma to 4π
+                E += (totalSolidAngle - 4 * Math.PI) ** 2;
+            }
+            return E * 50; // waga
+        }
+
         function computeEnergy(verts, tetras, includeAngle = true) {
             let E = edgeLengthEnergy(verts, tetras);
-            if (includeAngle) E += angleEnergy(verts, tetras);
+            if (includeAngle) {
+                E += angleEnergy(verts, tetras);
+                E += vertexAngleEnergy(verts, tetras);
+            }
             return E;
         }
 
         // --- Relaksacja (jedna iteracja) ---
-        function relaxStep(verts, tetras, step = 0.001, includeAngle = true) {
+        function relaxStep(verts, tetras, step = 0.0005, includeAngle = true) {
             const freeIndices = verts.map((v, i) => (v.fixed || v.active === false) ? -1 : i).filter(i => i >= 0);
             if (freeIndices.length === 0) return 0;
             const eps = 1e-5;
@@ -266,8 +293,8 @@
             return computeEnergy(verts, tetras, includeAngle);
         }
 
-        // --- Funkcja wykonująca kilka kroków relaksacji (wywoływana co 40 ms) ---
-        function relaxBatch(iterations = 5, step = 0.001) {
+        // Wykonaj kilka kroków
+        function relaxBatch(iterations = 5, step = 0.0005) {
             for (let i = 0; i < iterations; i++) {
                 relaxStep(meshData.verts, meshData.tetras, step, true);
             }
@@ -275,9 +302,7 @@
 
         // --- Renderowanie ---
         function rebuildMesh() {
-            while (meshGroup.children.length > 0) {
-                meshGroup.remove(meshGroup.children[0]);
-            }
+            while (meshGroup.children.length > 0) meshGroup.remove(meshGroup.children[0]);
             const colors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0xf9ca24, 0xa29bfe, 0xfd79a8, 0x00b894, 0xe17055];
             const mat = new THREE.MeshLambertMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
 
@@ -325,7 +350,7 @@
             return { tetraIndex: obj.userData.tetraIndex, faceIndex: hit.faceIndex % 4 };
         }
 
-        // --- Obsługa zdarzeń dotyku/myszy ---
+        // --- Obsługa zdarzeń ---
         let pointerDown = null;
         const LONG_PRESS_TIME = 600;
         const TAP_MAX_DIST = 10;
@@ -345,7 +370,6 @@
                 const hit = getTetraAndFaceAtPointer(e.clientX, e.clientY);
                 if (hit) {
                     addTetraOnFace(hit.tetraIndex, hit.faceIndex, meshData.verts, meshData.tetras);
-                    // Natychmiastowa aktualizacja geometrii, ciągła relaksacja zajmie się resztą
                     rebuildMesh();
                 }
             } else if (dist < TAP_MAX_DIST && dt >= LONG_PRESS_TIME) {
@@ -365,46 +389,24 @@
             else if (e.key === 'c' || e.key === 'C') resetMesh();
         });
 
-        window.toggleRelax = () => {
-            autoRelax = !autoRelax;
-            rebuildMesh();
-        };
+        window.toggleRelax = () => { autoRelax = !autoRelax; rebuildMesh(); };
+        window.resetMesh = () => { meshData = createInitialMesh(); rebuildMesh(); };
+        window.closeRing = () => { if (autoRelax) { relaxBatch(30, 0.001); rebuildMesh(); } };
+        window.createRing5 = (closed) => { meshData = createRing5(closed); rebuildMesh(); };
 
-        window.resetMesh = () => {
-            meshData = createInitialMesh();
-            rebuildMesh();
-        };
-
-        window.closeRing = () => {
-            // Przycisk uruchamia dodatkową serię iteracji (ale ciągła relaksacja i tak działa)
-            if (autoRelax) {
-                relaxBatch(30, 0.005);
-                rebuildMesh();
-            }
-        };
-
-        window.createRing5 = (closed) => {
-            meshData = createRing5(closed);
-            rebuildMesh();
-        };
-
-        // --- Ciągła pętla animacji z relaksacją 25 Hz ---
+        // --- Ciągła pętla ---
         function animate() {
             requestAnimationFrame(animate);
-
-            // Relaksacja co 40 ms
             const now = performance.now();
             if (autoRelax && (now - lastRelaxTime >= RELAX_INTERVAL)) {
-                relaxBatch(5, 0.001);   // 5 kroków na cykl
+                relaxBatch(5, 0.0005); // mniejszy krok
                 lastRelaxTime = now;
-                rebuildMesh();          // aktualizuj geometrię po zmianach
+                rebuildMesh();
             }
-
             controls.update();
             renderer.render(scene, camera);
         }
 
-        // Inicjalizacja
         rebuildMesh();
         animate();
 
