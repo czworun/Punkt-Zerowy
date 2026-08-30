@@ -3,12 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Interaktywne czworościany – poprawione</title>
+    <title>Interaktywne czworościany – stabilna relaksacja</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; touch-action: none; }
-        #info { position: absolute; top: 10px; left: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 6px 10px; border-radius: 8px; pointer-events: none; user-select: none; text-align: center; font-size: 13px; z-index: 10; }
-        #controls { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 20px; color: white; z-index: 20; flex-wrap: wrap; justify-content: center; max-width: 90%; }
-        button { padding: 6px 12px; cursor: pointer; border: none; border-radius: 15px; background: #4CAF50; color: white; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: all 0.2s; touch-action: manipulation; white-space: nowrap; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            pointer-events: none;
+            user-select: none;
+            text-align: center;
+            font-size: 13px;
+            z-index: 10;
+        }
+        #controls {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: rgba(0,0,0,0.5);
+            padding: 6px 10px;
+            border-radius: 20px;
+            color: white;
+            z-index: 20;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90%;
+        }
+        button {
+            padding: 6px 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 15px;
+            background: #4CAF50;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+            touch-action: manipulation;
+            white-space: nowrap;
+        }
         button:active { transform: scale(0.95); background: #45a049; }
         button:disabled { background: #888; }
     </style>
@@ -36,16 +78,19 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        const L0 = 2.0;
+        // --- Parametry ---
+        const L0 = 2.0;               // idealna długość krawędzi
         let autoRelax = true;
         let meshData = createInitialMesh();
 
         // --- Inicjalizacja Three.js ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x222222);
+
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(5, 5, 5);
         camera.lookAt(0, 0, 0);
+
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -58,6 +103,7 @@
         controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
         controls.update();
 
+        // Oświetlenie
         const ambientLight = new THREE.AmbientLight(0x404040);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -69,6 +115,7 @@
 
         const meshGroup = new THREE.Group();
         scene.add(meshGroup);
+
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
@@ -84,6 +131,7 @@
             return { verts, tetras };
         }
 
+        // Pobiera 4 ściany czworościanu jako listy indeksów
         function getAllFaces(tetra) {
             const [a,b,c,d] = tetra;
             return [
@@ -94,6 +142,7 @@
             ];
         }
 
+        // Dodaje nowy czworościan na wskazanej ścianie
         function addTetraOnFace(tetraIdx, faceIdx, verts, tetras) {
             const tetra = tetras[tetraIdx];
             const face = getAllFaces(tetra)[faceIdx];
@@ -103,16 +152,19 @@
             const normal = new THREE.Vector3().subVectors(p1, p0).cross(new THREE.Vector3().subVectors(p2, p0)).normalize();
             const vOpp = tetra.find(v => !face.includes(v));
             const dirToOpp = new THREE.Vector3().subVectors(verts[vOpp].pos, center).normalize();
-            const height = L0 * Math.sqrt(2/3); // poprawne dla konstrukcji na trójkącie
+            const height = L0 * Math.sqrt(2/3); // wysokość dla konstrukcji na trójkącie
             const newPos = center.clone().sub(dirToOpp.multiplyScalar(height));
             const newIdx = verts.length;
             verts.push({ pos: newPos, fixed: false, active: true });
             tetras.push([v0, v1, v2, newIdx]);
         }
 
+        // Usuwa czworościan (jeśli ma co najmniej jedną wolną ścianę)
         function removeTetra(tetraIdx, verts, tetras) {
             if (tetras.length <= 1) return;
             const tetraToRemove = tetras[tetraIdx];
+
+            // Sprawdź, czy czworościan ma wolną ścianę (nie jest całkowicie otoczony)
             let hasFreeFace = false;
             for (const face of getAllFaces(tetraToRemove)) {
                 const sortedFace = face.slice().sort((a,b) => a-b).join('_');
@@ -129,14 +181,20 @@
                 }
                 if (!shared) { hasFreeFace = true; break; }
             }
-            if (!hasFreeFace) return;
+            if (!hasFreeFace) return; // nie usuwaj wewnętrznych
+
+            // Usuń czworościan
             tetras.splice(tetraIdx, 1);
-            const used = new Set();
-            tetras.forEach(t => t.forEach(v => used.add(v)));
-            verts.forEach((v, i) => { if (!used.has(i)) v.active = false; });
+
+            // Oznacz nieużywane wierzchołki jako nieaktywne
+            const usedVertices = new Set();
+            tetras.forEach(t => t.forEach(v => usedVertices.add(v)));
+            verts.forEach((v, i) => {
+                if (!usedVertices.has(i)) v.active = false;
+            });
         }
 
-        // --- Energie ---
+        // --- Energia długości krawędzi ---
         function edgeLengthEnergy(verts, tetras) {
             let E = 0;
             const edges = new Set();
@@ -154,6 +212,7 @@
             return E;
         }
 
+        // --- Energia kątowa (domykanie pierścieni wokół wspólnych krawędzi) ---
         function angleEnergy(verts, tetras) {
             const edgeCount = new Map();
             for (const tetra of tetras) {
@@ -164,12 +223,14 @@
                     edgeCount.set(key, (edgeCount.get(key) || 0) + 1);
                 }
             }
+
             let angleE = 0;
             for (const [key, count] of edgeCount.entries()) {
-                if (count < 5) continue;
+                if (count < 5) continue; // tylko krawędzie współdzielone przez co najmniej 5 czworościanów
                 const [a, b] = key.split('_').map(Number);
                 const adjacent = tetras.filter(t => t.includes(a) && t.includes(b));
-                if (adjacent.length !== 5) continue;
+                if (adjacent.length !== 5) continue; // dokładnie 5
+
                 const axis = new THREE.Vector3().subVectors(verts[b].pos, verts[a].pos).normalize();
                 const angles = [];
                 for (const tetra of adjacent) {
@@ -186,53 +247,68 @@
                     angleE += (sum - 2 * Math.PI) ** 2;
                 }
             }
-            return angleE * 200;
+            return angleE * 200; // waga energii kątowej
         }
 
-        function computeEnergy(verts, tetras) {
-            return edgeLengthEnergy(verts, tetras) + angleEnergy(verts, tetras);
+        // --- Całkowita energia z opcjonalnym wyłączeniem składnika kątowego ---
+        function computeEnergy(verts, tetras, includeAngle = true) {
+            let E = edgeLengthEnergy(verts, tetras);
+            if (includeAngle) {
+                E += angleEnergy(verts, tetras);
+            }
+            return E;
         }
 
-        // --- Relaksacja ---
-        function relax(verts, tetras, iterations = 200, step = 0.01, useAdaptiveStep = true) {
+        // --- Relaksacja (z opcją pominięcia energii kątowej) ---
+        function relax(verts, tetras, iterations = 200, step = 0.01, useAdaptiveStep = true, includeAngle = true) {
             const freeIndices = verts.map((v, i) => (v.fixed || v.active === false) ? -1 : i).filter(i => i >= 0);
             if (freeIndices.length === 0) return;
+
             const eps = 1e-5;
             let currentStep = step;
-            let prevEnergy = computeEnergy(verts, tetras);
+            let prevEnergy = computeEnergy(verts, tetras, includeAngle);
             let stagnationCounter = 0;
+
             for (let it = 0; it < iterations; it++) {
                 const gradient = freeIndices.map(() => new THREE.Vector3());
+
+                // Oblicz gradient numerycznie
                 for (let k = 0; k < freeIndices.length; k++) {
                     const vi = freeIndices[k];
                     const original = verts[vi].pos.clone();
                     for (let dim = 0; dim < 3; dim++) {
                         verts[vi].pos.setComponent(dim, original.getComponent(dim) + eps);
-                        const ePlus = computeEnergy(verts, tetras);
+                        const ePlus = computeEnergy(verts, tetras, includeAngle);
                         verts[vi].pos.setComponent(dim, original.getComponent(dim) - eps);
-                        const eMinus = computeEnergy(verts, tetras);
+                        const eMinus = computeEnergy(verts, tetras, includeAngle);
                         gradient[k].setComponent(dim, (ePlus - eMinus) / (2 * eps));
                         verts[vi].pos.copy(original);
                     }
                 }
+
+                // Aktualizuj pozycje
                 for (let k = 0; k < freeIndices.length; k++) {
                     verts[freeIndices[k]].pos.add(gradient[k].multiplyScalar(-currentStep));
                 }
-                const newEnergy = computeEnergy(verts, tetras);
+
+                const newEnergy = computeEnergy(verts, tetras, includeAngle);
                 if (useAdaptiveStep) {
                     if (newEnergy < prevEnergy - 1e-8) {
                         stagnationCounter = 0;
                         currentStep = Math.min(currentStep * 1.05, step * 2);
                     } else {
                         stagnationCounter++;
-                        if (stagnationCounter > 10) { currentStep *= 0.5; stagnationCounter = 0; }
+                        if (stagnationCounter > 10) {
+                            currentStep *= 0.5;
+                            stagnationCounter = 0;
+                        }
                     }
                 }
                 prevEnergy = newEnergy;
             }
         }
 
-        // --- Tworzenie pierścienia (poprawiona geometria) ---
+        // --- Tworzenie pierścienia 5 czworościanów (poprawiona geometria) ---
         function createRing5(closed = false) {
             const verts = [];
             const tetras = [];
@@ -242,7 +318,8 @@
             const idxB = verts.push({ pos: axisB, fixed: true, active: true }) - 1;
 
             const dihedral = Math.acos(1/3);
-            let height = L0 / Math.sqrt(2); // poprawna wysokość dla konstrukcji z dwiema prostopadłymi krawędziami
+            // Poprawna wysokość dla konstrukcji z dwiema prostopadłymi krawędziami
+            let height = L0 / Math.sqrt(2);
 
             if (closed) {
                 // Analityczne skalowanie dla domknięcia: cot(36°)/√2 ≈ 0,97325
@@ -250,9 +327,10 @@
                 height *= scale;
             }
 
-            const angles = closed 
-                ? Array.from({ length: 5 }, (_, i) => i * 2 * Math.PI / 5)      // co 72°
-                : Array.from({ length: 5 }, (_, i) => i * dihedral);           // co kąt dwuścienny
+            // Kąty ustawienia wokół osi
+            const angles = closed
+                ? Array.from({ length: 5 }, (_, i) => i * 2 * Math.PI / 5)   // co 72°
+                : Array.from({ length: 5 }, (_, i) => i * dihedral);        // co kąt dwuścienny
 
             const half = L0 / 2;
             for (let i = 0; i < 5; i++) {
@@ -268,9 +346,11 @@
             return { verts, tetras };
         }
 
-        // --- Renderowanie ---
+        // --- Renderowanie siatki ---
         function rebuildMesh() {
-            while (meshGroup.children.length > 0) meshGroup.remove(meshGroup.children[0]);
+            while (meshGroup.children.length > 0) {
+                meshGroup.remove(meshGroup.children[0]);
+            }
             const colors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0xf9ca24, 0xa29bfe, 0xfd79a8, 0x00b894, 0xe17055];
             const mat = new THREE.MeshLambertMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
 
@@ -291,6 +371,7 @@
                 meshGroup.add(meshObj);
             });
 
+            // Rysuj tylko aktywne wierzchołki
             meshData.verts.forEach((v) => {
                 if (v.active === false) return;
                 const sphereGeom = new THREE.SphereGeometry(0.08, 8, 8);
@@ -306,21 +387,25 @@
             document.getElementById('btnRelax').textContent = `Relaks: ${autoRelax ? 'ON' : 'OFF'}`;
         }
 
+        // --- Raycasting dla wskaźnika ---
         function getTetraAndFaceAtPointer(clientX, clientY) {
             mouse.x = (clientX / renderer.domElement.clientWidth) * 2 - 1;
             mouse.y = -(clientY / renderer.domElement.clientHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
+
             const intersects = raycaster.intersectObjects(meshGroup.children, false);
             if (intersects.length === 0) return null;
+
             const hit = intersects[0];
             const obj = hit.object;
             if (obj.userData.tetraIndex === undefined) return null;
             return { tetraIndex: obj.userData.tetraIndex, faceIndex: hit.faceIndex % 4 };
         }
 
-        // --- Obsługa zdarzeń ---
+        // --- Obsługa zdarzeń dotyku/myszy ---
         let pointerDown = null;
-        const LONG_PRESS = 600, TAP_DIST = 10;
+        const LONG_PRESS_TIME = 600;   // ms
+        const TAP_MAX_DIST = 10;       // px
 
         renderer.domElement.addEventListener('pointerdown', (e) => {
             pointerDown = { x: e.clientX, y: e.clientY, time: Date.now() };
@@ -331,40 +416,95 @@
             const dx = e.clientX - pointerDown.x;
             const dy = e.clientY - pointerDown.y;
             const dt = Date.now() - pointerDown.time;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < TAP_DIST && dt < 500) {
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < TAP_MAX_DIST && dt < 500) {
+                // Tap – dodaj
                 const hit = getTetraAndFaceAtPointer(e.clientX, e.clientY);
                 if (hit) {
                     addTetraOnFace(hit.tetraIndex, hit.faceIndex, meshData.verts, meshData.tetras);
-                    if (autoRelax) relax(meshData.verts, meshData.tetras, 120, 0.005);
+                    if (autoRelax) {
+                        // Dwustopniowa relaksacja: najpierw tylko długości, potem z kątami
+                        relax(meshData.verts, meshData.tetras, 30, 0.001, false, false); // includeAngle = false
+                        relax(meshData.verts, meshData.tetras, 30, 0.0005, true, true);
+                    }
                     rebuildMesh();
                 }
-            } else if (dist < TAP_DIST && dt >= LONG_PRESS) {
+            } else if (dist < TAP_MAX_DIST && dt >= LONG_PRESS_TIME) {
+                // Long press – usuń
                 const hit = getTetraAndFaceAtPointer(e.clientX, e.clientY);
                 if (hit) {
                     removeTetra(hit.tetraIndex, meshData.verts, meshData.tetras);
-                    if (autoRelax) relax(meshData.verts, meshData.tetras, 120, 0.005);
+                    if (autoRelax) {
+                        relax(meshData.verts, meshData.tetras, 30, 0.001, false, false);
+                        relax(meshData.verts, meshData.tetras, 30, 0.0005, true, true);
+                    }
                     rebuildMesh();
                 }
             }
             pointerDown = null;
         });
 
-        renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
-        window.addEventListener('keydown', e => {
+        // Zapobieganie menu kontekstowemu
+        renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Klawisze
+        window.addEventListener('keydown', (e) => {
             if (e.key === 'r' || e.key === 'R') toggleRelax();
             else if (e.key === 'c' || e.key === 'C') resetMesh();
         });
 
-        window.toggleRelax = () => { autoRelax = !autoRelax; rebuildMesh(); };
-        window.resetMesh = () => { meshData = createInitialMesh(); if (autoRelax) relax(meshData.verts, meshData.tetras, 100, 0.01); rebuildMesh(); };
-        window.closeRing = () => { if (!autoRelax) { alert("Włącz auto-relaksację."); return; } relax(meshData.verts, meshData.tetras, 200, 0.01); relax(meshData.verts, meshData.tetras, 200, 0.005); relax(meshData.verts, meshData.tetras, 200, 0.001); rebuildMesh(); };
-        window.createRing5 = (closed) => { meshData = createRing5(closed); if (autoRelax) { relax(meshData.verts, meshData.tetras, 300, 0.01); relax(meshData.verts, meshData.tetras, 200, 0.005); } rebuildMesh(); };
+        // Funkcje globalne dla przycisków
+        window.toggleRelax = () => {
+            autoRelax = !autoRelax;
+            rebuildMesh();
+        };
 
-        function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+        window.resetMesh = () => {
+            meshData = createInitialMesh();
+            if (autoRelax) {
+                relax(meshData.verts, meshData.tetras, 100, 0.01);
+            }
+            rebuildMesh();
+        };
+
+        window.closeRing = () => {
+            if (!autoRelax) {
+                alert("Włącz auto-relaksację, aby domknąć pierścień.");
+                return;
+            }
+            // Dłuższa, dwustopniowa relaksacja dla domknięcia
+            relax(meshData.verts, meshData.tetras, 100, 0.005, true, false);
+            relax(meshData.verts, meshData.tetras, 200, 0.005, true, true);
+            rebuildMesh();
+        };
+
+        window.createRing5 = (closed) => {
+            meshData = createRing5(closed);
+            if (autoRelax) {
+                relax(meshData.verts, meshData.tetras, 100, 0.005, true, false);
+                relax(meshData.verts, meshData.tetras, 150, 0.005, true, true);
+            }
+            rebuildMesh();
+        };
+
+        // --- Pętla animacji ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Start
         rebuildMesh();
         animate();
-        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+        // Zmiana rozmiaru okna
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
