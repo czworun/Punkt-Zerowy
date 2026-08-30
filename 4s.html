@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Interaktywne czworościany – energia wierzchołkowa</title>
+    <title>Stabilna budowa czworościanów</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; touch-action: none; }
         #info {
@@ -227,76 +227,112 @@
             return angleE * 200;
         }
 
-        // --- NOWA ENERGIA WIERZCHOŁKOWA (kąty bryłowe) ---
-        function vertexAngleEnergy(verts, tetras) {
+        // --- Energia odpychająca (zapobiega przenikaniu) ---
+        function repulsionEnergy(verts, tetras) {
+            const minDist = 0.8 * L0; // minimalna dozwolona odległość
             let E = 0;
-            // Dla każdego aktywnego wierzchołka zbierz czworościany, które go zawierają
-            for (let vi = 0; vi < verts.length; vi++) {
-                if (!verts[vi].active) continue;
-                const adjacentTetras = tetras.filter(t => t.includes(vi));
-                if (adjacentTetras.length === 0) continue;
-                let totalSolidAngle = 0;
-                for (const tetra of adjacentTetras) {
-                    // Pobierz pozostałe trzy wierzchołki czworościanu
-                    const others = tetra.filter(v => v !== vi);
-                    if (others.length !== 3) continue;
-                    const p = verts[vi].pos;
-                    const p1 = verts[others[0]].pos;
-                    const p2 = verts[others[1]].pos;
-                    const p3 = verts[others[2]].pos;
-                    // Wektory jednostkowe z wierzchołka vi
-                    const v1 = new THREE.Vector3().subVectors(p1, p).normalize();
-                    const v2 = new THREE.Vector3().subVectors(p2, p).normalize();
-                    const v3 = new THREE.Vector3().subVectors(p3, p).normalize();
-                    // Kąt bryłowy trójkąta sferycznego (wzór z arctan)
-                    const det = v1.dot(new THREE.Vector3().crossVectors(v2, v3));
-                    const denom = 1 + v1.dot(v2) + v2.dot(v3) + v3.dot(v1);
-                    const omega = 2 * Math.atan2(Math.abs(det), denom);
-                    totalSolidAngle += omega;
-                }
-                // Idealna suma to 4π
-                E += (totalSolidAngle - 4 * Math.PI) ** 2;
+            // Zbierz aktywne wierzchołki
+            const activeVerts = [];
+            for (let i = 0; i < verts.length; i++) {
+                if (verts[i].active) activeVerts.push(i);
             }
-            return E * 50; // waga
+            // Zestaw krawędzi, aby nie karać połączonych
+            const edgeSet = new Set();
+            for (const tetra of tetras) {
+                const combos = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+                for (const [i,j] of combos) {
+                    const a = tetra[i], b = tetra[j];
+                    const key = a < b ? `${a}_${b}` : `${b}_${a}`;
+                    edgeSet.add(key);
+                }
+            }
+            for (let i = 0; i < activeVerts.length; i++) {
+                for (let j = i+1; j < activeVerts.length; j++) {
+                    const a = activeVerts[i], b = activeVerts[j];
+                    const key = a < b ? `${a}_${b}` : `${b}_${a}`;
+                    if (edgeSet.has(key)) continue; // pomiń połączone krawędzią
+                    const dist = verts[a].pos.distanceTo(verts[b].pos);
+                    if (dist < minDist) {
+                        E += (minDist - dist) ** 2;
+                    }
+                }
+            }
+            return E * 100; // waga
         }
 
         function computeEnergy(verts, tetras, includeAngle = true) {
             let E = edgeLengthEnergy(verts, tetras);
             if (includeAngle) {
                 E += angleEnergy(verts, tetras);
-                E += vertexAngleEnergy(verts, tetras);
             }
+            E += repulsionEnergy(verts, tetras);
             return E;
         }
 
-        // --- Relaksacja (jedna iteracja) ---
-        function relaxStep(verts, tetras, step = 0.0005, includeAngle = true) {
-            const freeIndices = verts.map((v, i) => (v.fixed || v.active === false) ? -1 : i).filter(i => i >= 0);
-            if (freeIndices.length === 0) return 0;
-            const eps = 1e-5;
-            const gradient = freeIndices.map(() => new THREE.Vector3());
-            for (let k = 0; k < freeIndices.length; k++) {
-                const vi = freeIndices[k];
-                const original = verts[vi].pos.clone();
-                for (let dim = 0; dim < 3; dim++) {
-                    verts[vi].pos.setComponent(dim, original.getComponent(dim) + eps);
-                    const ePlus = computeEnergy(verts, tetras, includeAngle);
-                    verts[vi].pos.setComponent(dim, original.getComponent(dim) - eps);
-                    const eMinus = computeEnergy(verts, tetras, includeAngle);
-                    gradient[k].setComponent(dim, (ePlus - eMinus) / (2 * eps));
-                    verts[vi].pos.copy(original);
+        // --- Lokalna relaksacja: tylko wierzchołki w otoczeniu nowego czworościanu ---
+        function relaxLocal(verts, tetras, centerTetraIdx, iterations = 50, step = 0.001) {
+            // Znajdź wierzchołki należące do czworościanu i jego bezpośrednich sąsiadów (wspólna krawędź lub ściana)
+            const affected = new Set();
+            const centerTetra = tetras[centerTetraIdx];
+            centerTetra.forEach(v => affected.add(v));
+            
+            // Dodaj wierzchołki z sąsiednich czworościanów (mających wspólną ścianę lub krawędź z centerTetra)
+            for (let i = 0; i < tetras.length; i++) {
+                if (i === centerTetraIdx) continue;
+                const other = tetras[i];
+                // Sprawdź, czy mają wspólny wierzchołek
+                const share = other.some(v => centerTetra.includes(v));
+                if (share) {
+                    other.forEach(v => affected.add(v));
                 }
             }
-            for (let k = 0; k < freeIndices.length; k++) {
-                verts[freeIndices[k]].pos.add(gradient[k].multiplyScalar(-step));
+            
+            const freeIndices = Array.from(affected).filter(vi => !verts[vi].fixed && verts[vi].active);
+            if (freeIndices.length === 0) return;
+            
+            const eps = 1e-5;
+            for (let it = 0; it < iterations; it++) {
+                const gradient = freeIndices.map(() => new THREE.Vector3());
+                for (let k = 0; k < freeIndices.length; k++) {
+                    const vi = freeIndices[k];
+                    const original = verts[vi].pos.clone();
+                    for (let dim = 0; dim < 3; dim++) {
+                        verts[vi].pos.setComponent(dim, original.getComponent(dim) + eps);
+                        const ePlus = computeEnergy(verts, tetras);
+                        verts[vi].pos.setComponent(dim, original.getComponent(dim) - eps);
+                        const eMinus = computeEnergy(verts, tetras);
+                        gradient[k].setComponent(dim, (ePlus - eMinus) / (2 * eps));
+                        verts[vi].pos.copy(original);
+                    }
+                }
+                for (let k = 0; k < freeIndices.length; k++) {
+                    verts[freeIndices[k]].pos.add(gradient[k].multiplyScalar(-step));
+                }
             }
-            return computeEnergy(verts, tetras, includeAngle);
         }
 
-        // Wykonaj kilka kroków
-        function relaxBatch(iterations = 5, step = 0.0005) {
-            for (let i = 0; i < iterations; i++) {
-                relaxStep(meshData.verts, meshData.tetras, step, true);
+        // --- Globalna relaksacja (rzadziej używana) ---
+        function relaxGlobal(iterations = 20, step = 0.0002) {
+            const freeIndices = meshData.verts.map((v, i) => (v.fixed || v.active === false) ? -1 : i).filter(i => i >= 0);
+            if (freeIndices.length === 0) return;
+            const eps = 1e-5;
+            for (let it = 0; it < iterations; it++) {
+                const gradient = freeIndices.map(() => new THREE.Vector3());
+                for (let k = 0; k < freeIndices.length; k++) {
+                    const vi = freeIndices[k];
+                    const original = meshData.verts[vi].pos.clone();
+                    for (let dim = 0; dim < 3; dim++) {
+                        meshData.verts[vi].pos.setComponent(dim, original.getComponent(dim) + eps);
+                        const ePlus = computeEnergy(meshData.verts, meshData.tetras);
+                        meshData.verts[vi].pos.setComponent(dim, original.getComponent(dim) - eps);
+                        const eMinus = computeEnergy(meshData.verts, meshData.tetras);
+                        gradient[k].setComponent(dim, (ePlus - eMinus) / (2 * eps));
+                        meshData.verts[vi].pos.copy(original);
+                    }
+                }
+                for (let k = 0; k < freeIndices.length; k++) {
+                    meshData.verts[freeIndices[k]].pos.add(gradient[k].multiplyScalar(-step));
+                }
             }
         }
 
@@ -370,6 +406,9 @@
                 const hit = getTetraAndFaceAtPointer(e.clientX, e.clientY);
                 if (hit) {
                     addTetraOnFace(hit.tetraIndex, hit.faceIndex, meshData.verts, meshData.tetras);
+                    if (autoRelax) {
+                        relaxLocal(meshData.verts, meshData.tetras, meshData.tetras.length - 1, 30, 0.001);
+                    }
                     rebuildMesh();
                 }
             } else if (dist < TAP_MAX_DIST && dt >= LONG_PRESS_TIME) {
@@ -391,18 +430,12 @@
 
         window.toggleRelax = () => { autoRelax = !autoRelax; rebuildMesh(); };
         window.resetMesh = () => { meshData = createInitialMesh(); rebuildMesh(); };
-        window.closeRing = () => { if (autoRelax) { relaxBatch(30, 0.001); rebuildMesh(); } };
+        window.closeRing = () => { if (autoRelax) { relaxGlobal(50, 0.0005); rebuildMesh(); } };
         window.createRing5 = (closed) => { meshData = createRing5(closed); rebuildMesh(); };
 
-        // --- Ciągła pętla ---
+        // --- Ciągła pętla animacji (tylko renderowanie) ---
         function animate() {
             requestAnimationFrame(animate);
-            const now = performance.now();
-            if (autoRelax && (now - lastRelaxTime >= RELAX_INTERVAL)) {
-                relaxBatch(5, 0.0005); // mniejszy krok
-                lastRelaxTime = now;
-                rebuildMesh();
-            }
             controls.update();
             renderer.render(scene, camera);
         }
