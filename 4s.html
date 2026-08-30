@@ -3,75 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Interaktywne czworościany - dodawanie i usuwanie</title>
+    <title>Interaktywne czworościany – poprawione</title>
     <style>
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            font-family: Arial, sans-serif; 
-            touch-action: none; 
-        }
-        #info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 6px 10px;
-            border-radius: 8px;
-            pointer-events: none;
-            user-select: none;
-            text-align: center;
-            font-size: 13px;
-            z-index: 10;
-        }
-        #controls {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 8px;
-            background: rgba(0,0,0,0.5);
-            padding: 6px 10px;
-            border-radius: 20px;
-            color: white;
-            z-index: 20;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 90%;
-        }
-        button {
-            padding: 6px 12px;
-            cursor: pointer;
-            border: none;
-            border-radius: 15px;
-            background: #4CAF50;
-            color: white;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            transition: all 0.2s;
-            touch-action: manipulation;
-            white-space: nowrap;
-        }
-        button:active {
-            transform: scale(0.95);
-            background: #45a049;
-        }
-        button:disabled {
-            background: #888;
-        }
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; touch-action: none; }
+        #info { position: absolute; top: 10px; left: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 6px 10px; border-radius: 8px; pointer-events: none; user-select: none; text-align: center; font-size: 13px; z-index: 10; }
+        #controls { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 20px; color: white; z-index: 20; flex-wrap: wrap; justify-content: center; max-width: 90%; }
+        button { padding: 6px 12px; cursor: pointer; border: none; border-radius: 15px; background: #4CAF50; color: white; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: all 0.2s; touch-action: manipulation; white-space: nowrap; }
+        button:active { transform: scale(0.95); background: #45a049; }
+        button:disabled { background: #888; }
     </style>
 </head>
 <body>
-    <div id="info">Kliknij ścianę: dodaj | Przytrzymaj: usuń | Czworościanów: 1 | Energia: 0.0000</div>
+    <div id="info">Kliknij: dodaj | Przytrzymaj: usuń | Czworościanów: 1 | Energia: 0.0000</div>
     <div id="controls">
         <button id="btnRelax" onclick="toggleRelax()">Relaks: ON</button>
         <button id="btnReset" onclick="resetMesh()">Reset</button>
         <button id="btnClose" onclick="closeRing()">Domknij pierścień</button>
-        <button id="btnCreateRing" onclick="createRing5()">Pierścień 5</button>
+        <button id="btnRingOpen" onclick="createRing5(false)">Pierścień 5 (otwarty)</button>
+        <button id="btnRingClosed" onclick="createRing5(true)">Pierścień 5 (domknięty)</button>
     </div>
 
     <script type="importmap">
@@ -87,19 +36,16 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- Parametry ---
         const L0 = 2.0;
         let autoRelax = true;
         let meshData = createInitialMesh();
 
-        // --- Three.js setup ---
+        // --- Inicjalizacja Three.js ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x222222);
-
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(5, 5, 5);
         camera.lookAt(0, 0, 0);
-
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -108,12 +54,8 @@
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.autoRotate = false;
         controls.target.set(0, 0, 0);
-        controls.touches = {
-            ONE: THREE.TOUCH.ROTATE,
-            TWO: THREE.TOUCH.DOLLY_PAN
-        };
+        controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
         controls.update();
 
         const ambientLight = new THREE.AmbientLight(0x404040);
@@ -127,30 +69,19 @@
 
         const meshGroup = new THREE.Group();
         scene.add(meshGroup);
-
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
         // --- Struktura danych ---
         function createInitialMesh() {
-            const verts = [];
-            verts.push({ pos: new THREE.Vector3(0, 0, 0), fixed: true, active: true });
-            verts.push({ pos: new THREE.Vector3(L0, 0, 0), fixed: true, active: true });
-            verts.push({ pos: new THREE.Vector3(L0/2, Math.sqrt(3)/2 * L0, 0), fixed: true, active: true });
-            verts.push({ pos: new THREE.Vector3(L0/2, Math.sqrt(3)/6 * L0, L0 * Math.sqrt(2/3)), fixed: false, active: true });
+            const verts = [
+                { pos: new THREE.Vector3(0, 0, 0), fixed: true, active: true },
+                { pos: new THREE.Vector3(L0, 0, 0), fixed: true, active: true },
+                { pos: new THREE.Vector3(L0/2, Math.sqrt(3)/2 * L0, 0), fixed: true, active: true },
+                { pos: new THREE.Vector3(L0/2, Math.sqrt(3)/6 * L0, L0 * Math.sqrt(2/3)), fixed: false, active: true }
+            ];
             const tetras = [[0, 1, 2, 3]];
             return { verts, tetras };
-        }
-
-        function getFace(tetra, faceIdx) {
-            const [a,b,c,d] = tetra;
-            const faces = [
-                [a,b,c],
-                [a,b,d],
-                [a,c,d],
-                [b,c,d]
-            ];
-            return faces[faceIdx];
         }
 
         function getAllFaces(tetra) {
@@ -165,14 +96,14 @@
 
         function addTetraOnFace(tetraIdx, faceIdx, verts, tetras) {
             const tetra = tetras[tetraIdx];
-            const face = getFace(tetra, faceIdx);
+            const face = getAllFaces(tetra)[faceIdx];
             const [v0, v1, v2] = face;
             const p0 = verts[v0].pos, p1 = verts[v1].pos, p2 = verts[v2].pos;
             const center = new THREE.Vector3().add(p0).add(p1).add(p2).divideScalar(3);
             const normal = new THREE.Vector3().subVectors(p1, p0).cross(new THREE.Vector3().subVectors(p2, p0)).normalize();
             const vOpp = tetra.find(v => !face.includes(v));
             const dirToOpp = new THREE.Vector3().subVectors(verts[vOpp].pos, center).normalize();
-            const height = L0 * Math.sqrt(2/3);
+            const height = L0 * Math.sqrt(2/3); // poprawne dla konstrukcji na trójkącie
             const newPos = center.clone().sub(dirToOpp.multiplyScalar(height));
             const newIdx = verts.length;
             verts.push({ pos: newPos, fixed: false, active: true });
@@ -182,42 +113,30 @@
         function removeTetra(tetraIdx, verts, tetras) {
             if (tetras.length <= 1) return;
             const tetraToRemove = tetras[tetraIdx];
-            
             let hasFreeFace = false;
             for (const face of getAllFaces(tetraToRemove)) {
                 const sortedFace = face.slice().sort((a,b) => a-b).join('_');
                 let shared = false;
                 for (let i = 0; i < tetras.length; i++) {
                     if (i === tetraIdx) continue;
-                    const otherTetra = tetras[i];
-                    for (const otherFace of getAllFaces(otherTetra)) {
-                        const otherSorted = otherFace.slice().sort((a,b) => a-b).join('_');
-                        if (sortedFace === otherSorted) {
+                    for (const otherFace of getAllFaces(tetras[i])) {
+                        if (otherFace.slice().sort((a,b) => a-b).join('_') === sortedFace) {
                             shared = true;
                             break;
                         }
                     }
                     if (shared) break;
                 }
-                if (!shared) {
-                    hasFreeFace = true;
-                    break;
-                }
+                if (!shared) { hasFreeFace = true; break; }
             }
             if (!hasFreeFace) return;
-
             tetras.splice(tetraIdx, 1);
-
-            // Oznacz nieużywane wierzchołki jako nieaktywne
-            const usedVertices = new Set();
-            tetras.forEach(t => t.forEach(v => usedVertices.add(v)));
-            for (let i = 0; i < verts.length; i++) {
-                if (!usedVertices.has(i)) {
-                    verts[i].active = false;
-                }
-            }
+            const used = new Set();
+            tetras.forEach(t => t.forEach(v => used.add(v)));
+            verts.forEach((v, i) => { if (!used.has(i)) v.active = false; });
         }
 
+        // --- Energie ---
         function edgeLengthEnergy(verts, tetras) {
             let E = 0;
             const edges = new Set();
@@ -228,8 +147,7 @@
                     const key = a < b ? `${a}_${b}` : `${b}_${a}`;
                     if (edges.has(key)) continue;
                     edges.add(key);
-                    const pa = verts[a].pos, pb = verts[b].pos;
-                    const d = pa.distanceTo(pb);
+                    const d = verts[a].pos.distanceTo(verts[b].pos);
                     E += (d - L0) ** 2;
                 }
             }
@@ -246,26 +164,22 @@
                     edgeCount.set(key, (edgeCount.get(key) || 0) + 1);
                 }
             }
-            
             let angleE = 0;
             for (const [key, count] of edgeCount.entries()) {
                 if (count < 5) continue;
                 const [a, b] = key.split('_').map(Number);
                 const adjacent = tetras.filter(t => t.includes(a) && t.includes(b));
                 if (adjacent.length !== 5) continue;
-                
                 const axis = new THREE.Vector3().subVectors(verts[b].pos, verts[a].pos).normalize();
                 const angles = [];
                 for (const tetra of adjacent) {
                     const others = tetra.filter(v => v !== a && v !== b);
-                    const c = others[0], d = others[1];
-                    const vc = new THREE.Vector3().subVectors(verts[c].pos, verts[a].pos);
-                    const vd = new THREE.Vector3().subVectors(verts[d].pos, verts[a].pos);
+                    const vc = new THREE.Vector3().subVectors(verts[others[0]].pos, verts[a].pos);
+                    const vd = new THREE.Vector3().subVectors(verts[others[1]].pos, verts[a].pos);
                     const vc_perp = vc.clone().sub(axis.clone().multiplyScalar(vc.dot(axis)));
                     const vd_perp = vd.clone().sub(axis.clone().multiplyScalar(vd.dot(axis)));
                     if (vc_perp.length() < 1e-10 || vd_perp.length() < 1e-10) continue;
-                    const angle = vc_perp.angleTo(vd_perp);
-                    angles.push(angle);
+                    angles.push(vc_perp.angleTo(vd_perp));
                 }
                 if (angles.length === 5) {
                     const sum = angles.reduce((acc, x) => acc + x, 0);
@@ -279,18 +193,16 @@
             return edgeLengthEnergy(verts, tetras) + angleEnergy(verts, tetras);
         }
 
+        // --- Relaksacja ---
         function relax(verts, tetras, iterations = 200, step = 0.01, useAdaptiveStep = true) {
             const freeIndices = verts.map((v, i) => (v.fixed || v.active === false) ? -1 : i).filter(i => i >= 0);
             if (freeIndices.length === 0) return;
-            
             const eps = 1e-5;
             let currentStep = step;
             let prevEnergy = computeEnergy(verts, tetras);
             let stagnationCounter = 0;
-
             for (let it = 0; it < iterations; it++) {
                 const gradient = freeIndices.map(() => new THREE.Vector3());
-                
                 for (let k = 0; k < freeIndices.length; k++) {
                     const vi = freeIndices[k];
                     const original = verts[vi].pos.clone();
@@ -303,12 +215,9 @@
                         verts[vi].pos.copy(original);
                     }
                 }
-                
                 for (let k = 0; k < freeIndices.length; k++) {
-                    const vi = freeIndices[k];
-                    verts[vi].pos.add(gradient[k].multiplyScalar(-currentStep));
+                    verts[freeIndices[k]].pos.add(gradient[k].multiplyScalar(-currentStep));
                 }
-                
                 const newEnergy = computeEnergy(verts, tetras);
                 if (useAdaptiveStep) {
                     if (newEnergy < prevEnergy - 1e-8) {
@@ -316,45 +225,42 @@
                         currentStep = Math.min(currentStep * 1.05, step * 2);
                     } else {
                         stagnationCounter++;
-                        if (stagnationCounter > 10) {
-                            currentStep *= 0.5;
-                            stagnationCounter = 0;
-                        }
+                        if (stagnationCounter > 10) { currentStep *= 0.5; stagnationCounter = 0; }
                     }
                 }
                 prevEnergy = newEnergy;
             }
         }
 
+        // --- Tworzenie pierścienia (poprawiona geometria) ---
         function createRing5(closed = false) {
             const verts = [];
             const tetras = [];
-            const edgeA = new THREE.Vector3(0, 0, -L0/2);
-            const edgeB = new THREE.Vector3(0, 0, +L0/2);
-            
+            const axisA = new THREE.Vector3(0, 0, -L0/2);
+            const axisB = new THREE.Vector3(0, 0, +L0/2);
+            const idxA = verts.push({ pos: axisA, fixed: true, active: true }) - 1;
+            const idxB = verts.push({ pos: axisB, fixed: true, active: true }) - 1;
+
             const dihedral = Math.acos(1/3);
-            let height = L0 * Math.sqrt(2/3);
+            let height = L0 / Math.sqrt(2); // poprawna wysokość dla konstrukcji z dwiema prostopadłymi krawędziami
+
             if (closed) {
-                const scale = 1 / (Math.tan(Math.PI/5) * Math.sqrt(2));
-                height = scale * L0 * Math.sqrt(2/3);
+                // Analityczne skalowanie dla domknięcia: cot(36°)/√2 ≈ 0,97325
+                const scale = 1 / (Math.tan(Math.PI / 5) * Math.sqrt(2));
+                height *= scale;
             }
-            
-            const idxA = verts.push({ pos: edgeA.clone(), fixed: true, active: true }) - 1;
-            const idxB = verts.push({ pos: edgeB.clone(), fixed: true, active: true }) - 1;
-            
-            const angles = closed ? 
-                Array.from({length:5}, (_,i) => i * 2*Math.PI/5) :
-                Array.from({length:5}, (_,i) => i * dihedral);
-            
+
+            const angles = closed 
+                ? Array.from({ length: 5 }, (_, i) => i * 2 * Math.PI / 5)      // co 72°
+                : Array.from({ length: 5 }, (_, i) => i * dihedral);           // co kąt dwuścienny
+
+            const half = L0 / 2;
             for (let i = 0; i < 5; i++) {
                 const angle = angles[i];
                 const rot = new THREE.Vector3(Math.cos(angle), Math.sin(angle), 0);
                 const opp = new THREE.Vector3(-Math.sin(angle), Math.cos(angle), 0);
-                const half = L0 / 2;
-                const mid = new THREE.Vector3(0, 0, 0);
-                const c = mid.clone().add(rot.clone().multiplyScalar(height)).add(opp.clone().multiplyScalar(-half));
-                const d = mid.clone().add(rot.clone().multiplyScalar(height)).add(opp.clone().multiplyScalar(half));
-                
+                const c = rot.clone().multiplyScalar(height).add(opp.clone().multiplyScalar(-half));
+                const d = rot.clone().multiplyScalar(height).add(opp.clone().multiplyScalar(half));
                 const idxC = verts.push({ pos: c, fixed: false, active: true }) - 1;
                 const idxD = verts.push({ pos: d, fixed: false, active: true }) - 1;
                 tetras.push([idxA, idxB, idxC, idxD]);
@@ -362,13 +268,12 @@
             return { verts, tetras };
         }
 
+        // --- Renderowanie ---
         function rebuildMesh() {
-            while(meshGroup.children.length > 0) {
-                meshGroup.remove(meshGroup.children[0]);
-            }
+            while (meshGroup.children.length > 0) meshGroup.remove(meshGroup.children[0]);
             const colors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0xf9ca24, 0xa29bfe, 0xfd79a8, 0x00b894, 0xe17055];
             const mat = new THREE.MeshLambertMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
-            
+
             meshData.tetras.forEach((tetra, ti) => {
                 const geom = new THREE.BufferGeometry();
                 const vertices = [];
@@ -386,7 +291,7 @@
                 meshGroup.add(meshObj);
             });
 
-            meshData.verts.forEach((v, i) => {
+            meshData.verts.forEach((v) => {
                 if (v.active === false) return;
                 const sphereGeom = new THREE.SphereGeometry(0.08, 8, 8);
                 const sphereMat = new THREE.MeshLambertMaterial({ color: v.fixed ? 0xff0000 : 0xffffff });
@@ -396,7 +301,7 @@
             });
 
             const energy = computeEnergy(meshData.verts, meshData.tetras);
-            document.getElementById('info').textContent = 
+            document.getElementById('info').textContent =
                 `Kliknij: dodaj | Przytrzymaj: usuń | Czworościanów: ${meshData.tetras.length} | Energia: ${energy.toFixed(4)} | Auto-relaksacja: ${autoRelax ? 'ON' : 'OFF'}`;
             document.getElementById('btnRelax').textContent = `Relaks: ${autoRelax ? 'ON' : 'OFF'}`;
         }
@@ -405,108 +310,61 @@
             mouse.x = (clientX / renderer.domElement.clientWidth) * 2 - 1;
             mouse.y = -(clientY / renderer.domElement.clientHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
-
             const intersects = raycaster.intersectObjects(meshGroup.children, false);
             if (intersects.length === 0) return null;
-
-            const firstHit = intersects[0];
-            const obj = firstHit.object;
+            const hit = intersects[0];
+            const obj = hit.object;
             if (obj.userData.tetraIndex === undefined) return null;
-            const tetraIndex = obj.userData.tetraIndex;
-            const faceIndex = firstHit.faceIndex % 4;
-            return { tetraIndex, faceIndex };
+            return { tetraIndex: obj.userData.tetraIndex, faceIndex: hit.faceIndex % 4 };
         }
 
         // --- Obsługa zdarzeń ---
         let pointerDown = null;
-        const LONG_PRESS_TIME = 600;
-        const TAP_MAX_DIST = 10;
+        const LONG_PRESS = 600, TAP_DIST = 10;
 
-        renderer.domElement.addEventListener('pointerdown', (event) => {
-            pointerDown = { x: event.clientX, y: event.clientY, time: Date.now() };
+        renderer.domElement.addEventListener('pointerdown', (e) => {
+            pointerDown = { x: e.clientX, y: e.clientY, time: Date.now() };
         });
 
-        renderer.domElement.addEventListener('pointerup', (event) => {
+        renderer.domElement.addEventListener('pointerup', (e) => {
             if (!pointerDown) return;
-            const dx = event.clientX - pointerDown.x;
-            const dy = event.clientY - pointerDown.y;
+            const dx = e.clientX - pointerDown.x;
+            const dy = e.clientY - pointerDown.y;
             const dt = Date.now() - pointerDown.time;
             const dist = Math.sqrt(dx*dx + dy*dy);
-
-            if (dist < TAP_MAX_DIST && dt < 500) {
-                const hit = getTetraAndFaceAtPointer(event.clientX, event.clientY);
+            if (dist < TAP_DIST && dt < 500) {
+                const hit = getTetraAndFaceAtPointer(e.clientX, e.clientY);
                 if (hit) {
                     addTetraOnFace(hit.tetraIndex, hit.faceIndex, meshData.verts, meshData.tetras);
-                    if (autoRelax) {
-                        relax(meshData.verts, meshData.tetras, 120, 0.005, true);
-                    }
+                    if (autoRelax) relax(meshData.verts, meshData.tetras, 120, 0.005);
                     rebuildMesh();
                 }
-            } else if (dist < TAP_MAX_DIST && dt >= LONG_PRESS_TIME) {
-                const hit = getTetraAndFaceAtPointer(event.clientX, event.clientY);
+            } else if (dist < TAP_DIST && dt >= LONG_PRESS) {
+                const hit = getTetraAndFaceAtPointer(e.clientX, e.clientY);
                 if (hit) {
                     removeTetra(hit.tetraIndex, meshData.verts, meshData.tetras);
-                    if (autoRelax) {
-                        relax(meshData.verts, meshData.tetras, 120, 0.005, true);
-                    }
+                    if (autoRelax) relax(meshData.verts, meshData.tetras, 120, 0.005);
                     rebuildMesh();
                 }
             }
             pointerDown = null;
         });
 
-        renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
-
-        window.addEventListener('keydown', (e) => {
+        renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+        window.addEventListener('keydown', e => {
             if (e.key === 'r' || e.key === 'R') toggleRelax();
             else if (e.key === 'c' || e.key === 'C') resetMesh();
         });
 
-        window.toggleRelax = function() {
-            autoRelax = !autoRelax;
-            rebuildMesh();
-        };
+        window.toggleRelax = () => { autoRelax = !autoRelax; rebuildMesh(); };
+        window.resetMesh = () => { meshData = createInitialMesh(); if (autoRelax) relax(meshData.verts, meshData.tetras, 100, 0.01); rebuildMesh(); };
+        window.closeRing = () => { if (!autoRelax) { alert("Włącz auto-relaksację."); return; } relax(meshData.verts, meshData.tetras, 200, 0.01); relax(meshData.verts, meshData.tetras, 200, 0.005); relax(meshData.verts, meshData.tetras, 200, 0.001); rebuildMesh(); };
+        window.createRing5 = (closed) => { meshData = createRing5(closed); if (autoRelax) { relax(meshData.verts, meshData.tetras, 300, 0.01); relax(meshData.verts, meshData.tetras, 200, 0.005); } rebuildMesh(); };
 
-        window.resetMesh = function() {
-            meshData = createInitialMesh();
-            if (autoRelax) relax(meshData.verts, meshData.tetras, 100, 0.01);
-            rebuildMesh();
-        };
-
-        window.closeRing = function() {
-            if (!autoRelax) {
-                alert("Włącz auto-relaksację, aby domknąć pierścień.");
-                return;
-            }
-            relax(meshData.verts, meshData.tetras, 200, 0.01, true);
-            relax(meshData.verts, meshData.tetras, 200, 0.005, true);
-            relax(meshData.verts, meshData.tetras, 200, 0.001, true);
-            rebuildMesh();
-        };
-
-        window.createRing5 = function() {
-            meshData = createRing5(false);
-            if (autoRelax) {
-                relax(meshData.verts, meshData.tetras, 300, 0.01, true);
-                relax(meshData.verts, meshData.tetras, 200, 0.005, true);
-            }
-            rebuildMesh();
-        };
-
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
+        function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
         rebuildMesh();
         animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
     </script>
 </body>
 </html>
